@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Pin Here</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #f0f2f5;
+        }
+
+        /* Permission Page */
+        #permission-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        #permission-page.hidden {
+            opacity: 0;
+            transform: scale(1.05);
+            pointer-events: none;
+        }
+
+        .permission-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 3rem 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            animation: slideUp 0.8s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .location-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 107, 107, 0); }
+        }
+
+        .location-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        .permission-card h1 {
+            color: #2d3436;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .permission-card .subtitle {
+            color: #636e72;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .permission-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+            border-left: 4px solid #667eea;
+        }
+
+        .permission-info p {
+            color: #2d3436;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .permission-info .coords {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #495057;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        .btn-allow {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);
+            font-weight: 600;
+            width: 100%;
+        }
+
+        .btn-allow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 184, 148, 0.6);
+        }
+
+        .btn-allow:active {
+            transform: translateY(0);
+        }
+
+        .btn-allow:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Map Page */
+        #map-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            z-index: 1;
+        }
+
+        #map-page.visible {
+            opacity: 1;
+            z-index: 100;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-header {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            animation: slideDown 0.6s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .map-header .pin-dot {
+            width: 12px;
+            height: 12px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .map-header h2 {
+            font-size: 1rem;
+            color: #2d3436;
+            font-weight: 600;
+        }
+
+        .map-header .coords-small {
+            font-size: 0.75rem;
+            color: #636e72;
+            font-family: monospace;
+        }
+
+        .custom-popup {
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .custom-popup h3 {
+            margin: 0 0 0.5rem 0;
+            color: #2d3436;
+            font-size: 1.1rem;
+        }
+
+        .custom-popup p {
+            margin: 0;
+            color: #636e72;
+            font-size: 0.9rem;
+        }
+
+        .custom-popup .coord-box {
+            background: #f8f9fa;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <!-- Permission Page -->
+    <div id="permission-page">
+        <div class="permission-card">
+            <div class="location-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            </div>
+            <h1>My Pin Here</h1>
+            <p class="subtitle">ตำแหน่งพิเศษรอคุณอยู่</p>
+
+            <div class="permission-info">
+                <p>
+                    <strong>ต้องการเข้าถึงตำแหน่งของคุณ</strong><br>
+                    เพื่อเข้าชมตำแหน่งนี้ คุณจำเป็นต้องอนุญาตให้เข้าถึงตำแหน่งที่ตั้งของอุปกรณ์ก่อน ระบบจะนำคุณไปยังหมุดบนแผนที่ทันทีที่ได้รับอนุญาต
+                </p>
+                <div class="coords">39.035218, 125.776758</div>
+            </div>
+
+            <button class="btn-allow" id="btnAllow" onclick="requestLocation()">
+                อนุญาตและเข้าชมตำแหน่ง
+            </button>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+            </div>
+
+            <p class="error-msg" id="errorMsg"></p>
+        </div>
+    </div>
+
+    <!-- Map Page -->
+    <div id="map-page">
+        <div class="map-header">
+            <div class="pin-dot"></div>
+            <div>
+                <h2>My Pin Here</h2>
+                <div class="coords-small">39.035218, 125.776758</div>
+            </div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const TARGET_LAT = 39.035218;
+        const TARGET_LNG = 125.776758;
+
+        function requestLocation() {
+            const btn = document.getElementById('btnAllow');
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('errorMsg');
+
+            btn.disabled = true;
+            loading.style.display = 'block';
+            errorMsg.style.display = 'none';
+
+            if (!navigator.geolocation) {
+                showError('เบราว์เซอร์ของคุณไม่รองรับการเข้าถึงตำแหน่ง');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Success - show map
+                    loading.style.display = 'none';
+                    showMap();
+                },
+                (error) => {
+                    loading.style.display = 'none';
+                    btn.disabled = false;
+
+                    let message = 'ไม่สามารถเข้าถึงตำแหน่งได้';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            message = 'คุณปฏิเสธการเข้าถึงตำแหน่ง กรุณาอนุญาตเพื่อเข้าชม';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message = 'ไม่สามารถระบุตำแหน่งได้ในขณะนี้';
+                            break;
+                        case error.TIMEOUT:
+                            message = 'หมดเวลาการขอตำแหน่ง กรุณาลองอีกครั้ง';
+                            break;
+                    }
+                    showError(message);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function showError(msg) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+        }
+
+        function showMap() {
+            const permPage = document.getElementById('permission-page');
+            const mapPage = document.getElementById('map-page');
+
+            permPage.classList.add('hidden');
+
+            setTimeout(() => {
+                mapPage.classList.add('visible');
+                initMap();
+            }, 300);
+        }
+
+        let map;
+        function initMap() {
+            if (map) return;
+
+            map = L.map('map').setView([TARGET_LAT, TARGET_LNG], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            const customIcon = L.divIcon({
+                className: 'custom-pin',
+                html: `<div style="
+                    width: 40px;
+                    height: 40px;
+                    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 3px solid white;
+                ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style="transform: rotate(45deg);">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                </div>`,
+                iconSize: [40, 40],
+                iconAnchor: [20, 40]
+            });
+
+            const marker = L.marker([TARGET_LAT, TARGET_LNG], { icon: customIcon }).addTo(map);
+
+            const popupContent = `
+                <div class="custom-popup">
+                    <h3>📍 My Pin Here</h3>
+                    <p>ตำแหน่งที่คุณต้องการเข้าชม</p>
+                    <div class="coord-box">${TARGET_LAT}, ${TARGET_LNG}</div>
+                </div>
+            `;
+
+            marker.bindPopup(popupContent).openPopup();
+
+            // Add circle around the pin
+            L.circle([TARGET_LAT, TARGET_LNG], {
+                color: '#ff6b6b',
+                fillColor: '#ff6b6b',
+                fillOpacity: 0.15,
+                radius: 200
+            }).addTo(map);
+        }
+    </script>
+</body>
+  </html>
