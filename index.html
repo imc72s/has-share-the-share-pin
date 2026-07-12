@@ -1,396 +1,276 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pixel Frame RGB + AI Shield</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-        body {
-            background:#050508; color:#e0e0e0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-            min-height:100vh; overflow-x:hidden; touch-action:none;
-        }
-        .app-header {
-            background:linear-gradient(135deg,#0a0a1a,#12122a); padding:16px; text-align:center;
-            border-bottom:1px solid #1a1a3a; position:sticky; top:0; z-index:100; backdrop-filter:blur(10px);
-        }
-        .app-header h1 {
-            font-size:1.4rem; font-weight:800;
-            background:linear-gradient(90deg,#ff1a1a,#1aff1a,#1a1aff); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-            letter-spacing:-0.5px;
-        }
-        .app-header p { color:#666; font-size:0.72rem; margin-top:4px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pixel Frame RGB — Advanced Stealth Lab</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#030305;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;overflow-x:hidden;touch-action:none}
 
-        .controls-panel {
-            background:#0a0a14; padding:12px 16px; border-bottom:1px solid #1a1a2e;
-            display:flex; flex-wrap:wrap; gap:10px; align-items:end; justify-content:center;
-            overflow-x:auto; -webkit-overflow-scrolling:touch;
-        }
-        .control-group { display:flex; flex-direction:column; gap:3px; align-items:center; min-width:60px; }
-        .control-group label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.5px; color:#555; font-weight:600; white-space:nowrap; }
-        .control-group input[type="number"] {
-            background:#12121e; border:1px solid #2a2a3e; color:#fff; padding:6px 8px; border-radius:6px;
-            font-size:0.85rem; width:70px; text-align:center; outline:none;
-        }
-        .control-group input[type="number"]:focus { border-color:#ff4080; }
-        .control-group input[type="range"] {
-            width:100px; height:4px; -webkit-appearance:none; appearance:none; background:#1a1a2e; border-radius:2px; outline:none;
-        }
-        .control-group input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance:none; width:14px; height:14px; background:linear-gradient(135deg,#ff4080,#ff8040);
-            border-radius:50%; cursor:pointer; box-shadow:0 2px 6px rgba(255,64,128,0.4);
-        }
-        .control-group input[type="file"] { display:none; }
+/* WARNING OVERLAY */
+.warning-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:9999;display:flex;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(10px)}
+.warning-box{background:linear-gradient(180deg,#1a0a1a,#0a0a14);border:1px solid #3a1a2a;border-radius:16px;max-width:520px;width:100%;padding:28px;box-shadow:0 0 60px rgba(255,0,64,0.15)}
+.warning-box h2{color:#ff3366;font-size:1.3rem;margin-bottom:12px;text-align:center}
+.warning-box .warn-icon{font-size:3rem;text-align:center;margin-bottom:12px}
+.warning-box p{color:#aaa;font-size:0.85rem;line-height:1.7;margin-bottom:10px}
+.warning-box ul{color:#888;font-size:0.8rem;line-height:1.8;margin:12px 0 16px 20px}
+.warning-box ul li{margin-bottom:4px}
+.warning-box .warn-actions{display:flex;gap:10px;margin-top:20px}
+.warning-box .btn{width:100%;padding:12px;border-radius:8px;border:none;font-size:0.9rem;cursor:pointer;transition:all 0.2s}
+.warning-box .btn-decline{background:#1a1a2e;border:1px solid #333;color:#666}
+.warning-box .btn-accept{background:linear-gradient(135deg,#ff2040,#ff4080);color:#fff;font-weight:700}
+.warning-box .btn-accept:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,32,64,0.4)}
 
-        .btn {
-            background:linear-gradient(135deg,#1a1a3e,#12122a); border:1px solid #2a2a4e; color:#aaa;
-            padding:8px 14px; border-radius:8px; cursor:pointer; font-size:0.8rem; transition:all 0.2s;
-            display:inline-flex; align-items:center; gap:5px; font-weight:500; white-space:nowrap;
-        }
-        .btn:hover { background:linear-gradient(135deg,#2a2a5e,#1a1a4a); border-color:#4a4a7e; color:#fff; transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.3); }
-        .btn:active { transform:translateY(0); }
-        .btn.primary { background:linear-gradient(135deg,#e02050,#ff4080); border-color:#ff4080; color:#fff; }
-        .btn.primary:hover { background:linear-gradient(135deg,#f03060,#ff6090); box-shadow:0 4px 16px rgba(255,64,128,0.4); }
-        .btn.success { background:linear-gradient(135deg,#00a040,#00d060); border-color:#00d060; color:#fff; }
-        .btn.success:hover { background:linear-gradient(135deg,#00c050,#00e070); box-shadow:0 4px 16px rgba(0,208,96,0.4); }
-        .btn.info { background:linear-gradient(135deg,#2040c0,#4080ff); border-color:#4080ff; color:#fff; }
-        .btn.info:hover { background:linear-gradient(135deg,#3050d0,#5090ff); }
-        .btn.warning { background:linear-gradient(135deg,#c08000,#ffaa00); border-color:#ffaa00; color:#000; }
-        .btn.warning:hover { background:linear-gradient(135deg,#d09010,#ffbb20); }
-        .btn.ghost { background:transparent; border-color:#3a3a5e; color:#888; }
-        .btn.ghost:hover { border-color:#666; color:#fff; }
-        .btn.active-mode { background:linear-gradient(135deg,#ff4080,#ff8040); border-color:#ff8040; color:#fff; box-shadow:0 0 12px rgba(255,64,128,0.3); }
-        .btn.danger { background:linear-gradient(135deg,#801010,#c02020); border-color:#c02020; color:#fff; }
-        .btn.danger:hover { background:linear-gradient(135deg,#a02020,#e03030); }
+/* APP HEADER */
+.app-header{background:linear-gradient(135deg,#0a0a1a,#12122a);padding:14px;text-align:center;border-bottom:1px solid #1a1a3a;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.app-header h1{font-size:1.3rem;font-weight:800;background:linear-gradient(90deg,#ff1a1a,#1aff1a,#1a1aff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.app-header p{color:#555;font-size:0.7rem;margin-top:3px}
 
-        .mode-panel {
-            background:#0d0d18; padding:10px 16px; border-bottom:1px solid #1a1a2e;
-            display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch;
-        }
-        .mode-desc {
-            background:#0d0d18; padding:8px 16px; border-bottom:1px solid #1a1a2e;
-            font-size:0.75rem; color:#666; text-align:center; min-height:32px;
-        }
+/* TABS */
+.tab-bar{display:flex;background:#0a0a14;border-bottom:1px solid #1a1a2e;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab-btn{background:transparent;border:none;color:#555;padding:12px 18px;font-size:0.8rem;cursor:pointer;white-space:nowrap;position:relative;transition:all 0.2s;font-weight:600}
+.tab-btn.active{color:#fff}
+.tab-btn.active::after{content:'';position:absolute;bottom:0;left:10%;width:80%;height:2px;background:linear-gradient(90deg,#ff4080,#ff8040);border-radius:2px}
+.tab-btn:hover{color:#ccc}
 
-        .canvas-area {
-            display:flex; justify-content:center; align-items:center; padding:20px;
-            min-height:300px; background:#020205; position:relative; overflow:hidden;
-        }
-        #mainCanvas {
-            border:1px solid #1a1a3e; border-radius:4px;
-            box-shadow:0 0 60px rgba(0,0,0,0.8), 0 0 0 1px #1a1a3e;
-            cursor:grab; image-rendering:pixelated; image-rendering:crisp-edges;
-            max-width:100%; touch-action:none; background:#000;
-        }
-        #mainCanvas:active { cursor:grabbing; }
-        .hint-badge {
-            position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.03);
-            border:1px solid rgba(255,255,255,0.05); padding:6px 12px; border-radius:8px;
-            font-size:0.7rem; color:#444; pointer-events:none;
-        }
-        .info-bar {
-            position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
-            background:rgba(10,10,20,0.9); border:1px solid #2a2a4e; padding:6px 14px;
-            border-radius:20px; font-size:0.7rem; color:#666; pointer-events:none; backdrop-filter:blur(4px); white-space:nowrap;
-        }
+/* SUB TABS */
+.sub-tab-bar{display:flex;gap:6px;padding:8px 16px;background:#080810;border-bottom:1px solid #1a1a1e;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sub-tab-btn{background:#12121e;border:1px solid #1a1a2e;color:#666;padding:6px 12px;border-radius:6px;font-size:0.72rem;cursor:pointer;white-space:nowrap;transition:all 0.2s}
+.sub-tab-btn.active{background:linear-gradient(135deg,#ff4080,#ff8040);border-color:#ff4080;color:#fff}
+.sub-tab-btn:hover:not(.active){border-color:#333;color:#888}
 
-        .modal-overlay {
-            display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-            background:rgba(0,0,0,0.85); z-index:1000; justify-content:center; align-items:center;
-            padding:20px; backdrop-filter:blur(8px);
-        }
-        .modal-overlay.active { display:flex; }
-        .modal-box {
-            background:#12121e; border:1px solid #2a2a4e; border-radius:12px; width:100%; max-width:900px;
-            max-height:90vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.5);
-        }
-        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #1a1a2e; }
-        .modal-header h3 { color:#fff; font-size:1rem; }
-        .modal-close { background:none; border:none; color:#555; font-size:1.5rem; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:all 0.2s; }
-        .modal-close:hover { background:#1a1a2e; color:#fff; }
-        .modal-body { padding:20px; overflow:auto; flex:1; }
-        .copy-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
-        .copy-tab { background:#1a1a2e; border:1px solid #2a2a4e; color:#888; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:0.8rem; transition:all 0.2s; }
-        .copy-tab.active { background:linear-gradient(135deg,#ff4080,#ff8040); border-color:#ff4080; color:#fff; }
-        .copy-tab:hover:not(.active) { border-color:#4a4a7e; color:#ccc; }
-        .preview-area {
-            background:#0a0a14; border:1px solid #1a1a2e; border-radius:8px; padding:16px;
-            overflow:auto; max-height:50vh; font-family:'Courier New',monospace; font-size:6px; line-height:6px; white-space:pre; color:#fff;
-        }
-        .preview-area.ansi { font-size:8px; line-height:8px; }
+/* CONTROLS */
+.controls-panel{background:#0a0a14;padding:10px 14px;border-bottom:1px solid #1a1a2e;display:flex;flex-wrap:wrap;gap:8px;align-items:end;justify-content:center;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.control-group{display:flex;flex-direction:column;gap:2px;align-items:center;min-width:55px}
+.control-group label{font-size:0.6rem;text-transform:uppercase;letter-spacing:0.5px;color:#444;font-weight:600;white-space:nowrap}
+.control-group input[type="number"]{background:#12121e;border:1px solid #1a1a2e;color:#fff;padding:5px 6px;border-radius:5px;font-size:0.8rem;width:60px;text-align:center;outline:none}
+.control-group input[type="number"]:focus{border-color:#ff4080}
+.control-group input[type="range"]{width:85px;height:3px;-webkit-appearance:none;appearance:none;background:#12121e;border-radius:2px;outline:none}
+.control-group input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:linear-gradient(135deg,#ff4080,#ff8040);border-radius:50%;cursor:pointer;box-shadow:0 1px 4px rgba(255,64,128,0.4)}
+.control-group input[type="file"]{display:none}
 
-        .checkbox-wrapper { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.8rem; color:#888; }
-        .checkbox-wrapper input { width:16px; height:16px; accent-color:#ff4080; }
-        .value-badge { background:#1a1a2e; color:#ff4080; font-weight:700; font-size:0.75rem; padding:2px 8px; border-radius:4px; min-width:36px; text-align:center; }
-        .row-flex { display:flex; align-items:center; gap:8px; }
+.btn{background:linear-gradient(135deg,#1a1a3e,#12122a);border:1px solid #2a2a4e;color:#aaa;padding:7px 12px;border-radius:7px;cursor:pointer;font-size:0.75rem;transition:all 0.2s;display:inline-flex;align-items:center;gap:4px;font-weight:500;white-space:nowrap}
+.btn:hover{background:linear-gradient(135deg,#2a2a5e,#1a1a4a);border-color:#4a4a7e;color:#fff;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:linear-gradient(135deg,#e02050,#ff4080);border-color:#ff4080;color:#fff}
+.btn.primary:hover{box-shadow:0 4px 16px rgba(255,64,128,0.4)}
+.btn.success{background:linear-gradient(135deg,#00a040,#00d060);border-color:#00d060;color:#fff}
+.btn.success:hover{box-shadow:0 4px 16px rgba(0,208,96,0.4)}
+.btn.info{background:linear-gradient(135deg,#2040c0,#4080ff);border-color:#4080ff;color:#fff}
+.btn.warning{background:linear-gradient(135deg,#c08000,#ffaa00);border-color:#ffaa00;color:#000}
+.btn.ghost{background:transparent;border-color:#2a2a3e;color:#666}
+.btn.ghost:hover{border-color:#555;color:#fff}
+.btn.danger{background:linear-gradient(135deg,#800020,#ff0040);border-color:#ff0040;color:#fff}
 
-        .toast {
-            position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px);
-            background:#1a1a3e; border:1px solid #4a4a7e; color:#fff; padding:12px 24px;
-            border-radius:8px; font-size:0.85rem; z-index:3000; opacity:0; transition:all 0.3s ease;
-            pointer-events:none; box-shadow:0 8px 32px rgba(0,0,0,0.4);
-        }
-        .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+.value-badge{background:#12121e;color:#ff4080;font-weight:700;font-size:0.7rem;padding:2px 6px;border-radius:4px;min-width:30px;text-align:center}
+.row-flex{display:flex;align-items:center;gap:6px}
 
-        .loading-overlay {
-            display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-            background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center; flex-direction:column; gap:16px;
-        }
-        .loading-overlay.active { display:flex; }
-        .spinner { width:48px; height:48px; border:3px solid #1a1a3e; border-top-color:#ff4080; border-radius:50%; animation:spin 1s linear infinite; }
-        @keyframes spin { to { transform:rotate(360deg); } }
+/* CANVAS AREA */
+.canvas-area{display:flex;justify-content:center;align-items:center;padding:16px;min-height:280px;background:#020205;position:relative;overflow:hidden;gap:12px;flex-wrap:wrap}
+.canvas-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px}
+.canvas-label{font-size:0.65rem;color:#444;text-transform:uppercase;letter-spacing:1px}
+#originalCanvas,#mainCanvas{border:1px solid #1a1a3e;border-radius:4px;box-shadow:0 0 40px rgba(0,0,0,0.8);image-rendering:pixelated;image-rendering:crisp-edges;background:#000;max-width:100%;touch-action:none}
+#originalCanvas{opacity:0.6;border-color:#1a1a1e}
+.hint-badge{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);padding:5px 10px;border-radius:6px;font-size:0.65rem;color:#333;pointer-events:none}
+.info-bar{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(10,10,20,0.9);border:1px solid #2a2a4e;padding:5px 12px;border-radius:20px;font-size:0.65rem;color:#555;pointer-events:none;backdrop-filter:blur(4px);white-space:nowrap}
 
-        /* Warning Modal */
-        .warning-box {
-            background:#1a0a0a; border:2px solid #c02020; border-radius:12px; width:100%; max-width:500px;
-            padding:24px; box-shadow:0 0 40px rgba(192,32,32,0.3);
-        }
-        .warning-box h2 {
-            color:#ff4444; font-size:1.3rem; margin-bottom:12px; text-align:center;
-            display:flex; align-items:center; justify-content:center; gap:8px;
-        }
-        .warning-box .warning-content {
-            color:#ccc; font-size:0.85rem; line-height:1.6; margin-bottom:20px;
-        }
-        .warning-box .warning-content ul {
-            margin-left:20px; margin-top:8px; color:#888;
-        }
-        .warning-box .warning-content li {
-            margin-bottom:6px;
-        }
-        .warning-box .warning-content strong {
-            color:#ff6666;
-        }
-        .warning-actions {
-            display:flex; gap:12px; justify-content:center;
-        }
+/* MODAL */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;justify-content:center;align-items:center;padding:16px;backdrop-filter:blur(8px)}
+.modal-overlay.active{display:flex}
+.modal-box{background:#12121e;border:1px solid #2a2a4e;border-radius:12px;width:100%;max-width:800px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #1a1a2e}
+.modal-header h3{color:#fff;font-size:0.95rem}
+.modal-close{background:none;border:none;color:#444;font-size:1.5rem;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all 0.2s}
+.modal-close:hover{background:#1a1a2e;color:#fff}
+.modal-body{padding:16px;overflow:auto;flex:1}
+.copy-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.copy-tab{background:#1a1a2e;border:1px solid #2a2a4e;color:#666;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.75rem;transition:all 0.2s}
+.copy-tab.active{background:linear-gradient(135deg,#ff4080,#ff8040);border-color:#ff4080;color:#fff}
+.preview-area{background:#0a0a14;border:1px solid #1a1a2e;border-radius:6px;padding:12px;overflow:auto;max-height:45vh;font-family:'Courier New',monospace;font-size:5px;line-height:5px;white-space:pre;color:#fff}
 
-        /* AI Shield specific */
-        .shield-panel {
-            background:#0a0a14; padding:12px 16px; border-bottom:1px solid #1a1a2e;
-            display:none; flex-wrap:wrap; gap:10px; align-items:end; justify-content:center;
-        }
-        .shield-panel.active { display:flex; }
+/* TOAST & LOADING */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#1a1a3e;border:1px solid #4a4a7e;color:#fff;padding:10px 20px;border-radius:8px;font-size:0.8rem;z-index:3000;opacity:0;transition:all 0.3s ease;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.loading-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:2000;justify-content:center;align-items:center;flex-direction:column;gap:12px}
+.loading-overlay.active{display:flex}
+.spinner{width:40px;height:40px;border:3px solid #1a1a3e;border-top-color:#ff4080;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-        .compare-toggle {
-            position:absolute; top:10px; left:10px;
-            background:rgba(10,10,20,0.9); border:1px solid #2a2a4e;
-            padding:6px 12px; border-radius:6px; font-size:0.75rem; color:#888;
-            cursor:pointer; z-index:10; backdrop-filter:blur(4px);
-        }
-        .compare-toggle:hover { border-color:#ff4080; color:#fff; }
-        .compare-toggle.active { background:rgba(255,64,128,0.2); border-color:#ff4080; color:#ff4080; }
+/* PASTE ZONE */
+.paste-zone{background:#080810;border:2px dashed #1a1a2e;border-radius:10px;padding:20px;text-align:center;margin:10px 16px;color:#444;font-size:0.8rem;cursor:pointer;transition:all 0.2s}
+.paste-zone:hover{border-color:#333;color:#666}
+.paste-zone.active{border-color:#ff4080;background:#0a0a14;color:#ff4080}
 
-        @media (max-width:768px) {
-            .controls-panel { flex-direction:row; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding:10px; }
-            .mode-panel { flex-wrap:nowrap; }
-            .shield-panel { flex-direction:row; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; }
-            .app-header h1 { font-size:1.2rem; }
-        }
-    </style>
+@media(max-width:768px){
+.controls-panel{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding:8px}
+.mode-panel{flex-wrap:nowrap}
+.canvas-area{flex-direction:column}
+}
+</style>
 </head>
 <body>
-    <div class="app-header">
-        <h1>🔴🟢🔵 Pixel Frame RGB</h1>
-        <p>ลากเลื่อน • ซูม • คัดลอก | ระบบ Subpixel + AI Shield</p>
-    </div>
 
-    <!-- Main Controls -->
-    <div class="controls-panel" id="mainControls">
-        <div class="control-group">
-            <label>ภาพ</label>
-            <button class="btn" onclick="document.getElementById('fileInput').click()">📁 เปิด</button>
-            <input type="file" id="fileInput" accept="image/*">
-        </div>
-        <div class="control-group">
-            <label>Frame W</label>
-            <input type="number" id="frameWidth" value="64" min="8" max="256">
-        </div>
-        <div class="control-group">
-            <label>Frame H</label>
-            <input type="number" id="frameHeight" value="64" min="8" max="256">
-        </div>
-        <div class="control-group">
-            <label>Auto</label>
-            <div class="checkbox-wrapper" onclick="document.getElementById('autoSize').click()">
-                <input type="checkbox" id="autoSize">
-            </div>
-        </div>
-        <div class="control-group">
-            <label>Scale</label>
-            <div class="row-flex"><input type="range" id="pixelScale" value="12" min="6" max="24"><span class="value-badge" id="pixelScaleVal">12</span></div>
-        </div>
-        <div class="control-group">
-            <label>Gap</label>
-            <div class="row-flex"><input type="range" id="gap" value="1" min="0" max="3"><span class="value-badge" id="gapVal">1</span></div>
-        </div>
-        <div class="control-group">
-            <label>Zoom</label>
-            <div class="row-flex"><input type="range" id="zoomSlider" value="1" min="0.1" max="5" step="0.1"><span class="value-badge" id="zoomVal">1.0</span></div>
-        </div>
-        <div class="control-group">
-            <label>Light</label>
-            <div class="row-flex"><input type="range" id="brightness" value="100" min="50" max="200"><span class="value-badge" id="brightnessVal">100</span></div>
-        </div>
-        <div class="control-group">
-            <label>จัดการ</label>
-            <div class="row-flex"><button class="btn" id="resetBtn">↺</button><button class="btn info" id="fitBtn">⊘</button></div>
-        </div>
-        <div class="control-group">
-            <label>คัดลอก</label>
-            <div class="row-flex"><button class="btn primary" id="copyImageBtn">🖼️</button><button class="btn success" id="copyTextBtn">📋</button></div>
-        </div>
-    </div>
+<!-- WARNING MODAL -->
+<div class="warning-overlay" id="warningOverlay">
+<div class="warning-box">
+<div class="warn-icon">⚠️</div>
+<h2>คำเตือนก่อนใช้งาน</h2>
+<p>เครื่องมือนี้เป็น <strong>ระบบทดลองทางศิลปะและเทคนิคดิจิตอล</strong> สำหรับศึกษาหลักการ Perceptual Camouflage และ Adversarial Image Processing</p>
+<ul>
+<li>ห้ามใช้เพื่อหลบเลี่ยงกฎหมายหรือนโยบายของแพลตฟอร์ม</li>
+<li>ผู้ใช้รับผิดชอบต่อเนื้อหาที่สร้างและแชร์เองทั้งหมด</li>
+<li>ระบบไม่รับประกันว่าจะหลบเลี่ยง AI Detection ได้ 100%</li>
+<li>เนื้อหาที่ละเมิดสิทธิบุคคลอื่นหรือผิดกฎหมายถือเป็นความผิด</li>
+</ul>
+<p style="color:#666;font-size:0.75rem;text-align:center">กด "ยอมรับ" เพื่อเข้าใช้งานระบบ</p>
+<div class="warn-actions">
+<button class="btn btn-decline" onclick="window.location.href='about:blank'">ปฏิเสธ</button>
+<button class="btn btn-accept" onclick="acceptWarning()">ยอมรับและเข้าใช้งาน</button>
+</div>
+</div>
+</div>
 
-    <!-- Mode Panel -->
-    <div class="mode-panel" id="modePanel">
-        <button class="btn active-mode" data-mode="normal" onclick="setMode('normal')">🎨 Normal</button>
-        <button class="btn ghost" data-mode="phase" onclick="setMode('phase')">🌊 Phase</button>
-        <button class="btn ghost" data-mode="shuffle" onclick="setMode('shuffle')">🔀 Shuffle</button>
-        <button class="btn ghost" data-mode="adversarial" onclick="setMode('adversarial')">👁️ Adversarial</button>
-        <button class="btn ghost" data-mode="edgebreak" onclick="setMode('edgebreak')">⚡ Edge</button>
-        <button class="btn ghost" data-mode="deepmask" onclick="setMode('deepmask')">🎭 Mask</button>
-        <button class="btn ghost" data-mode="scatter" onclick="setMode('scatter')">💫 Scatter</button>
-        <button class="btn ghost" data-mode="noisegrid" onclick="setMode('noisegrid')">🧩 Grid</button>
-        <button class="btn danger" data-mode="shield" onclick="enterShieldMode()">🛡️ AI Shield</button>
-    </div>
+<div class="app-header">
+<h1>🔴🟢🔵 Pixel Frame RGB</h1>
+<p>Advanced Stealth Lab | Perceptual Camouflage Engine</p>
+</div>
 
-    <div class="mode-desc" id="modeDesc">โหมดปกติ: แสดงภาพ RGB Subpixel แบบจอมือถือ มองไกลๆ จะเห็นภาพชัด</div>
+<div class="tab-bar">
+<button class="tab-btn active" data-tab="normal" onclick="switchMainTab('normal')">🎨 Pixel Frame</button>
+<button class="tab-btn" data-tab="stealth" onclick="switchMainTab('stealth')">🎭 Advanced Stealth</button>
+</div>
 
-    <!-- AI Shield Panel (hidden by default) -->
-    <div class="shield-panel" id="shieldPanel">
-        <div class="control-group">
-            <label>เทคนิค</label>
-            <select id="shieldTechnique" style="background:#12121e;border:1px solid #2a2a3e;color:#fff;padding:6px 8px;border-radius:6px;font-size:0.8rem;outline:none;" onchange="updateShieldDesc()">
-                <option value="gradient">Gradient Masking</option>
-                <option value="dct">DCT Perturbation</option>
-                <option value="patch">Patch Randomize</option>
-                <option value="chromatic">Chromatic Shift</option>
-                <option value="freq">Frequency Split</option>
-                <option value="hash">Hash Poison</option>
-                <option value="mosaic">Smart Mosaic</option>
-                <option value="glitch">Glitch Burst</option>
-            </select>
-        </div>
-        <div class="control-group">
-            <label>Strength</label>
-            <div class="row-flex"><input type="range" id="shieldStrength" value="50" min="10" max="100"><span class="value-badge" id="shieldStrengthVal">50</span></div>
-        </div>
-        <div class="control-group">
-            <label>Block</label>
-            <input type="number" id="shieldBlock" value="8" min="2" max="32" style="width:60px">
-        </div>
-        <div class="control-group">
-            <label>Seed</label>
-            <input type="number" id="shieldSeed" value="42" min="0" max="9999" style="width:60px">
-        </div>
-        <div class="control-group">
-            <label>จัดการ</label>
-            <div class="row-flex">
-                <button class="btn warning" onclick="applyShield()">▶ ใช้</button>
-                <button class="btn" onclick="resetShield()">↺</button>
-            </div>
-        </div>
-        <div class="control-group">
-            <label>ผลลัพธ์</label>
-            <div class="row-flex">
-                <button class="btn primary" onclick="copyShieldImage()">🖼️</button>
-                <button class="btn success" onclick="downloadShield()">💾</button>
-            </div>
-        </div>
-    </div>
+<div class="paste-zone" id="pasteZone" onclick="triggerPaste()">
+📋 แตะที่นี่ หรือกด <strong>Ctrl+V</strong> / <strong>ค้างที่นี่</strong> เพื่อวางภาพจากคลิปบอร์ด<br>
+<span style="font-size:0.7rem;color:#333">รองรับการวางจากมือถือ (long press) และคอมพิวเตอร์</span>
+</div>
 
-    <div class="shield-panel" id="shieldDescPanel" style="display:none;padding-top:0;">
-        <div style="color:#666;font-size:0.75rem;text-align:center;width:100%;">
-            <strong id="shieldTechName">Gradient Masking</strong>: <span id="shieldTechDesc">ใส่ noise ตาม gradient ของภาพ ทำลาย feature detection ของ AI แต่ตามนุษย์ยังเห็นภาพ</span>
-        </div>
-    </div>
+<div class="controls-panel" id="controlsPanel">
+<div class="control-group">
+<label>ภาพ</label>
+<button class="btn" onclick="document.getElementById('fileInput').click()">📁 เปิด</button>
+<input type="file" id="fileInput" accept="image/*">
+</div>
+<div class="control-group">
+<label>Frame W</label>
+<input type="number" id="frameWidth" value="64" min="8" max="256">
+</div>
+<div class="control-group">
+<label>Frame H</label>
+<input type="number" id="frameHeight" value="64" min="8" max="256">
+</div>
+<div class="control-group">
+<label>Auto</label>
+<div class="checkbox-wrapper" onclick="document.getElementById('autoSize').click()">
+<input type="checkbox" id="autoSize">
+</div>
+</div>
+<div class="control-group">
+<label>Scale</label>
+<div class="row-flex"><input type="range" id="pixelScale" value="12" min="6" max="24"><span class="value-badge" id="pixelScaleVal">12</span></div>
+</div>
+<div class="control-group">
+<label>Gap</label>
+<div class="row-flex"><input type="range" id="gap" value="1" min="0" max="3"><span class="value-badge" id="gapVal">1</span></div>
+</div>
+<div class="control-group">
+<label>Zoom</label>
+<div class="row-flex"><input type="range" id="zoomSlider" value="1" min="0.1" max="5" step="0.1"><span class="value-badge" id="zoomVal">1.0</span></div>
+</div>
+<div class="control-group">
+<label>Light</label>
+<div class="row-flex"><input type="range" id="brightness" value="100" min="50" max="200"><span class="value-badge" id="brightnessVal">100</span></div>
+</div>
+<div class="control-group">
+<label>จัดการ</label>
+<div class="row-flex"><button class="btn" id="resetBtn">↺</button><button class="btn info" id="fitBtn">⊘</button></div>
+</div>
+<div class="control-group">
+<label>คัดลอก</label>
+<div class="row-flex"><button class="btn primary" id="copyImageBtn">🖼️</button><button class="btn success" id="copyTextBtn">📋</button></div>
+</div>
+</div>
 
-    <!-- Canvas Area -->
-    <div class="canvas-area" id="canvasArea">
-        <div class="compare-toggle" id="compareToggle" onclick="toggleCompare()" style="display:none">👁 ดูต้นฉบับ</div>
-        <canvas id="mainCanvas"></canvas>
-        <div class="hint-badge" id="hintBadge">🖱️ ลากเลื่อน • หมุนซูม</div>
-        <div class="info-bar" id="infoBar">64×64 | 1.0x</div>
-    </div>
+<!-- NORMAL MODE SUB TABS -->
+<div class="sub-tab-bar" id="normalSubTabs">
+<button class="sub-tab-btn active" data-mode="normal" onclick="setSubMode('normal')">🎨 Normal</button>
+<button class="sub-tab-btn" data-mode="phase" onclick="setSubMode('phase')">🌊 Phase</button>
+<button class="sub-tab-btn" data-mode="shuffle" onclick="setSubMode('shuffle')">🔀 Shuffle</button>
+<button class="sub-tab-btn" data-mode="adversarial" onclick="setSubMode('adversarial')">👁️ Adv</button>
+<button class="sub-tab-btn" data-mode="edgebreak" onclick="setSubMode('edgebreak')">⚡ Edge</button>
+<button class="sub-tab-btn" data-mode="deepmask" onclick="setSubMode('deepmask')">🎭 Mask</button>
+<button class="sub-tab-btn" data-mode="scatter" onclick="setSubMode('scatter')">💫 Scatter</button>
+<button class="sub-tab-btn" data-mode="noisegrid" onclick="setSubMode('noisegrid')">🧩 Noise</button>
+</div>
 
-    <!-- Copy Modal -->
-    <div class="modal-overlay" id="copyModal">
-        <div class="modal-box">
-            <div class="modal-header"><h3>📋 คัดลอก Pixel Art</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-            <div class="modal-body">
-                <div class="copy-tabs">
-                    <button class="copy-tab active" onclick="switchTab('ansi')">ANSI Color</button>
-                    <button class="copy-tab" onclick="switchTab('html')">HTML Grid</button>
-                    <button class="copy-tab" onclick="switchTab('subpixel')">Subpixel Text</button>
-                </div>
-                <div style="margin-bottom:12px"><button class="btn primary" onclick="copyCurrentTab()">📋 คัดลอก</button></div>
-                <div class="preview-area" id="previewArea"></div>
-            </div>
-        </div>
-    </div>
+<!-- STEALTH MODE SUB TABS -->
+<div class="sub-tab-bar" id="stealthSubTabs" style="display:none">
+<button class="sub-tab-btn active" data-mode="fourier" onclick="setSubMode('fourier')">🌐 Fourier Mask</button>
+<button class="sub-tab-btn" data-mode="semantic" onclick="setSubMode('semantic')">🧠 Semantic</button>
+<button class="sub-tab-btn" data-mode="gradientfog" onclick="setSubMode('gradientfog')">🌫️ Grad Fog</button>
+<button class="sub-tab-btn" data-mode="colorwarp" onclick="setSubMode('colorwarp')">🌈 Color Warp</button>
+<button class="sub-tab-btn" data-mode="multijitter" onclick="setSubMode('multijitter')">📐 Multi Jitter</button>
+<button class="sub-tab-btn" data-mode="edgedissolve" onclick="setSubMode('edgedissolve')">💨 Dissolve</button>
+<button class="sub-tab-btn" data-mode="phashpoison" onclick="setSubMode('phashpoison')">🧪 pHash Poison</button>
+<button class="sub-tab-btn" data-mode="chaosmix" onclick="setSubMode('chaosmix')">🔥 Chaos Mix</button>
+</div>
 
-    <!-- Warning Modal -->
-    <div class="modal-overlay" id="warningModal" style="z-index:5000">
-        <div class="warning-box">
-            <h2>⚠️ คำเตือนก่อนใช้งาน</h2>
-            <div class="warning-content">
-                <p>ฟีเจอร์ <strong>AI Shield</strong> เป็นเครื่องมือป้องกันความเป็นส่วนตัว (Privacy Protection) สำหรับรูปภาพส่วนตัวของคุณ</p>
-                <ul>
-                    <li>เทคนิคเหล่านี้ใช้ <strong>Adversarial Perturbation</strong> เพื่อทำให้ AI ตรวจจับ/จำแนกภาพผิดพลาด</li>
-                    <li>ไม่รับประกัน 100% กับทุกระบบ AI เนื่องจาก model แต่ละตัวต่างกัน</li>
-                    <li>รูปภาพยังคงมองเห็นได้ด้วยตามนุษย์ แต่ AI จะมีความยากในการ analyze</li>
-                    <li>ใช้ความรับผิดชอบต่อสังคม ไม่ใช้เพื่อหลีกเลี่ยงกฎหมายหรือ platform policy ที่ชอบธรรม</li>
-                    <li>ประมวลผลทั้งหมดทำในเบราว์เซอร์ (client-side) ไม่มีการอัปโหลดขึ้นเซิร์ฟเวอร์</li>
-                </ul>
-                <p style="margin-top:10px;color:#ff6666;text-align:center;font-weight:bold">คุณเข้าใจและยอมรับการใช้งานเครื่องมือนี้หรือไม่?</p>
-            </div>
-            <div class="warning-actions">
-                <button class="btn ghost" onclick="closeWarning(false)">❌ ยกเลิก</button>
-                <button class="btn danger" onclick="closeWarning(true)">✅ เข้าใจและยอมรับ</button>
-            </div>
-        </div>
-    </div>
+<div class="canvas-area" id="canvasArea">
+<div class="canvas-box">
+<div class="canvas-label">Original</div>
+<canvas id="originalCanvas" width="256" height="256"></canvas>
+</div>
+<div class="canvas-box">
+<div class="canvas-label">Processed</div>
+<canvas id="mainCanvas" width="256" height="256"></canvas>
+</div>
+<div class="hint-badge" id="hintBadge">🖱️ ลากเลื่อน • หมุนซูม</div>
+<div class="info-bar" id="infoBar">64×64 | 1.0x | NORMAL</div>
+</div>
 
-    <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div style="color:#666;font-size:0.85rem">กำลังประมวลผล...</div></div>
-    <div class="toast" id="toast"></div>
+<div class="modal-overlay" id="copyModal">
+<div class="modal-box">
+<div class="modal-header"><h3>📋 คัดลอก Pixel Art</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
+<div class="modal-body">
+<div class="copy-tabs">
+<button class="copy-tab active" onclick="switchTab('ansi')">ANSI Color</button>
+<button class="copy-tab" onclick="switchTab('html')">HTML Grid</button>
+<button class="copy-tab" onclick="switchTab('subpixel')">Subpixel Text</button>
+</div>
+<div style="margin-bottom:10px"><button class="btn primary" onclick="copyCurrentTab()">📋 คัดลอก</button></div>
+<div class="preview-area" id="previewArea"></div>
+</div>
+</div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div style="color:#555;font-size:0.8rem">กำลังประมวลผล...</div></div>
+<div class="toast" id="toast"></div>
 
 <script>
+// ==================== WARNING ====================
+function acceptWarning(){
+    document.getElementById('warningOverlay').style.display='none';
+    localStorage.setItem('stealth_warning_accepted','1');
+}
+if(localStorage.getItem('stealth_warning_accepted')==='1'){
+    document.getElementById('warningOverlay').style.display='none';
+}
+
 // ==================== STATE ====================
-let img=null, sourceCanvas=null, sourceCtx=null, sourceData=null, shieldData=null;
+let img=null, sourceCanvas=null, sourceCtx=null, sourceData=null;
 let frameW=64, frameH=64, pixelScale=12, gap=1, zoom=1, brightness=1.0;
 let offsetX=0, offsetY=0;
 let isDragging=false, dragStartX=0, dragStartY=0, dragOffX=0, dragOffY=0;
-let currentMode='normal', currentTab='ansi';
-let shieldMode=false, compareMode=false, shieldAccepted=false;
+let currentMainTab='normal';
+let currentSubMode='normal';
+let currentCopyTab='ansi';
 
-const MODES = {
-    normal: { name:'🎨 Normal', desc:'โหมดปกติ: แสดงภาพ RGB Subpixel แบบจอมือถือ มองไกลๆ จะเห็นภาพชัด' },
-    phase: { name:'🌊 Phase Scramble', desc:'สลับตำแหน่ง pixel ตาม phase สุ่ม: AI เห็นเป็น noise แต่มนุษย์ละสายตาแล้วเห็นภาพ' },
-    shuffle: { name:'🔀 Block Shuffle', desc:'สลับ pixel ภายในแต่ละบล็อก: ทำลาย spatial relationship ที่ AI ใช้ recognize' },
-    adversarial: { name:'👁️ Adversarial', desc:'ใส่ high-frequency noise ตาม edge: ทำลาย feature map ของ AI แต่มนุษย์ยังเห็นภาพ' },
-    edgebreak: { name:'⚡ Edge Break', desc:'แทรกสีตรงข้ามตามขอบภาพ: AI ตรวจจับ edge ไม่เจอ แต่สมองมนุษย์รวมภาพได้' },
-    deepmask: { name:'🎭 Deep Mask', desc:'ซ่อนภาพใน checkerboard pattern: AI เห็นเป็น texture ธรรมดา' },
-    scatter: { name:'💫 RGB Scatter', desc:'กระจายแต่ละ channel ไปคนละทิศ: ภาพดู 3D/เบลอ แต่ยังเห็นรูปร่าง' },
-    noisegrid: { name:'🧩 Noise Grid', desc:'แบ่งกริดแล้วใส่ noise แบบสลับระดับ: ทำลาย consistency ของ AI' }
-};
-
-const SHIELD_TECHS = {
-    gradient: { name:'Gradient Masking', desc:'ใส่ noise ตาม gradient ของภาพ ทำลาย feature detection ของ AI แต่ตามนุษย์ยังเห็นภาพ' },
-    dct: { name:'DCT Perturbation', desc:'แก้ไข DCT coefficients เหมือน JPEG artifact แต่ targeted ให้ AI อ่านผิด' },
-    patch: { name:'Patch Randomize', desc:'สลับ patch ขนาดเล็กภายในกริด ทำลาย spatial coherence ที่ AI ใช้วิเคราะห์' },
-    chromatic: { name:'Chromatic Shift', desc:'แยก RGB channels คนละทิศทางแบบ lens distortion ทำให้ AI สับสนใน color space' },
-    freq: { name:'Frequency Split', desc:'แยก low/high frequency แล้วประมวลผลแยก ทำลาย frequency signature ของ AI' },
-    hash: { name:'Hash Poison', desc:'ใส่ noise ที่เปลี่ยน perceptual hash (pHash) แต่ตามนุษย์แทบไม่เห็นต่าง' },
-    mosaic: { name:'Smart Mosaic', desc:'mosaic แบบ adaptive ที่ตามนุษย์ยังพอเห็นรูปร่าง แต่ AI อ่านไม่ออก' },
-    glitch: { name:'Glitch Burst', desc:'แทรกข้อมูล glitch แบบสุ่มตำแหน่ง ทำลาย byte pattern ที่ AI ใช้ scan' }
-};
-
-// ==================== DOM ====================
 const canvas=document.getElementById('mainCanvas');
 const ctx=canvas.getContext('2d',{alpha:false});
+const origCanvas=document.getElementById('originalCanvas');
+const origCtx=origCanvas.getContext('2d',{alpha:false});
 const infoBar=document.getElementById('infoBar');
-const hintBadge=document.getElementById('hintBadge');
 const toast=document.getElementById('toast');
 
 // ==================== INIT ====================
@@ -399,34 +279,101 @@ function init(){
     sourceCtx=sourceCanvas.getContext('2d',{willReadFrequently:true});
     resizeCanvas();
     render();
-    updateShieldDesc();
+    setupClipboardPaste();
 }
 function resizeCanvas(){
-    canvas.width=frameW*pixelScale;
-    canvas.height=frameH*pixelScale;
-    sourceCanvas.width=frameW;
-    sourceCanvas.height=frameH;
+    const size=frameW*pixelScale;
+    canvas.width=size; canvas.height=size;
+    origCanvas.width=size; origCanvas.height=size;
+    sourceCanvas.width=frameW; sourceCanvas.height=frameH;
 }
 
-// ==================== IMAGE ====================
+// ==================== CLIPBOARD PASTE ====================
+function setupClipboardPaste(){
+    const zone=document.getElementById('pasteZone');
+    // Desktop paste
+    document.addEventListener('paste',(e)=>{
+        const items=e.clipboardData.items;
+        for(let i=0;i<items.length;i++){
+            if(items[i].type.indexOf('image')!==-1){
+                const blob=items[i].getAsFile();
+                const url=URL.createObjectURL(blob);
+                loadImage(url);
+                showToast('วางภาพจากคลิปบอร์ดแล้ว');
+                break;
+            }
+        }
+    });
+    // Mobile long press simulation
+    let pressTimer;
+    zone.addEventListener('touchstart',(e)=>{
+        zone.classList.add('active');
+        pressTimer=setTimeout(()=>{
+            // Try to read clipboard on mobile (limited support)
+            if(navigator.clipboard&&navigator.clipboard.read){
+                navigator.clipboard.read().then(items=>{
+                    for(const item of items){
+                        for(const type of item.types){
+                            if(type.startsWith('image/')){
+                                item.getType(type).then(blob=>{
+                                    const url=URL.createObjectURL(blob);
+                                    loadImage(url);
+                                    showToast('วางภาพจากคลิปบอร์ดแล้ว');
+                                });
+                                return;
+                            }
+                        }
+                    }
+                }).catch(()=>{
+                    showToast('ไม่สามารถเข้าถึงคลิปบอร์ดบนมือถือ ลองใช้ Ctrl+V บนคีย์บอร์ด');
+                });
+            }
+        },800);
+    });
+    zone.addEventListener('touchend',()=>{ clearTimeout(pressTimer); zone.classList.remove('active'); });
+    zone.addEventListener('touchcancel',()=>{ clearTimeout(pressTimer); zone.classList.remove('active'); });
+}
+function triggerPaste(){
+    if(navigator.clipboard&&navigator.clipboard.read){
+        navigator.clipboard.read().then(items=>{
+            for(const item of items){
+                for(const type of item.types){
+                    if(type.startsWith('image/')){
+                        item.getType(type).then(blob=>{
+                            const url=URL.createObjectURL(blob);
+                            loadImage(url);
+                            showToast('วางภาพจากคลิปบอร์ดแล้ว');
+                        });
+                        return;
+                    }
+                }
+            }
+            showToast('ไม่พบภาพในคลิปบอร์ด');
+        }).catch(()=>showToast('ไม่สามารถเข้าถึงคลิปบอร์ดได้'));
+    } else {
+        showToast('กด Ctrl+V หรือแตะค้างเพื่อวางภาพ');
+    }
+}
+
+// ==================== IMAGE LOAD ====================
 document.getElementById('fileInput').addEventListener('change',(e)=>{
     const file=e.target.files[0]; if(!file)return;
     showLoading(true);
-    const reader=new FileReader();
-    reader.onload=(ev)=>{
-        img=new Image();
-        img.onload=()=>{
-            if(document.getElementById('autoSize').checked){
-                frameW=Math.min(img.width,128); frameH=Math.min(img.height,128);
-                document.getElementById('frameWidth').value=frameW;
-                document.getElementById('frameHeight').value=frameH;
-            }
-            resetTransform(); shieldData=null; compareMode=false; updateCompareBtn(); resizeCanvas(); render(); showLoading(false); showToast('โหลดภาพสำเร็จ!');
-        };
-        img.src=ev.target.result;
-    };
-    reader.readAsDataURL(file);
+    const url=URL.createObjectURL(file);
+    loadImage(url);
 });
+function loadImage(url){
+    img=new Image();
+    img.onload=()=>{
+        if(document.getElementById('autoSize').checked){
+            frameW=Math.min(img.width,128); frameH=Math.min(img.height,128);
+            document.getElementById('frameWidth').value=frameW;
+            document.getElementById('frameHeight').value=frameH;
+        }
+        resetTransform(); resizeCanvas(); render(); showLoading(false); showToast('โหลดภาพสำเร็จ!');
+    };
+    img.src=url;
+}
 
 // ==================== CONTROLS ====================
 document.getElementById('frameWidth').addEventListener('change',(e)=>{ frameW=Math.min(256,Math.max(8,parseInt(e.target.value)||64)); e.target.value=frameW; resizeCanvas(); render(); });
@@ -442,63 +389,23 @@ document.getElementById('fitBtn').addEventListener('click',()=>{ fitToImage(); s
 function resetTransform(){ offsetX=0; offsetY=0; zoom=1; document.getElementById('zoomSlider').value=1; document.getElementById('zoomVal').textContent='1.0'; render(); }
 function fitToImage(){ if(!img)return; zoom=Math.min(frameW/img.width,frameH/img.height,1); offsetX=0; offsetY=0; document.getElementById('zoomSlider').value=zoom; document.getElementById('zoomVal').textContent=zoom.toFixed(1); render(); }
 
-// ==================== MODE ====================
-function setMode(mode){
-    if(shieldMode) exitShieldMode();
-    currentMode=mode;
-    document.querySelectorAll('.mode-panel .btn').forEach(b=>{ b.classList.remove('active-mode'); if(!b.classList.contains('danger')) b.classList.add('ghost'); });
-    const btn=document.querySelector(`.mode-panel .btn[data-mode="${mode}"]`);
-    if(btn){ btn.classList.add('active-mode'); btn.classList.remove('ghost'); }
-    document.getElementById('modeDesc').textContent=MODES[mode].desc;
+// ==================== TABS ====================
+function switchMainTab(tab){
+    currentMainTab=tab;
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+    document.getElementById('normalSubTabs').style.display=tab==='normal'?'flex':'none';
+    document.getElementById('stealthSubTabs').style.display=tab==='stealth'?'flex':'none';
+    // Reset sub mode
+    if(tab==='normal') setSubMode('normal');
+    else setSubMode('fourier');
+}
+function setSubMode(mode){
+    currentSubMode=mode;
+    const container=currentMainTab==='normal'?document.getElementById('normalSubTabs'):document.getElementById('stealthSubTabs');
+    container.querySelectorAll('.sub-tab-btn').forEach(b=>b.classList.remove('active'));
+    container.querySelector(`.sub-tab-btn[data-mode="${mode}"]`).classList.add('active');
     render();
-}
-
-// ==================== SHIELD MODE ====================
-function enterShieldMode(){
-    if(!shieldAccepted){ document.getElementById('warningModal').classList.add('active'); return; }
-    shieldMode=true;
-    document.querySelectorAll('.mode-panel .btn').forEach(b=>b.classList.remove('active-mode'));
-    document.querySelector('.mode-panel .btn[data-mode="shield"]').classList.add('active-mode');
-    document.getElementById('shieldPanel').classList.add('active');
-    document.getElementById('shieldDescPanel').style.display='flex';
-    document.getElementById('modeDesc').textContent='🛡️ AI Shield Mode: ป้องกันการตรวจจับโดย AI สำหรับรูปภาพส่วนตัว';
-    document.getElementById('compareToggle').style.display='flex';
-    render();
-}
-
-function exitShieldMode(){
-    shieldMode=false;
-    document.getElementById('shieldPanel').classList.remove('active');
-    document.getElementById('shieldDescPanel').style.display='none';
-    document.getElementById('compareToggle').style.display='none';
-    compareMode=false; updateCompareBtn();
-}
-
-function closeWarning(accepted){
-    document.getElementById('warningModal').classList.remove('active');
-    if(accepted){ shieldAccepted=true; enterShieldMode(); }
-}
-
-function updateShieldDesc(){
-    const tech=document.getElementById('shieldTechnique').value;
-    const t=SHIELD_TECHS[tech];
-    document.getElementById('shieldTechName').textContent=t.name;
-    document.getElementById('shieldTechDesc').textContent=t.desc;
-}
-
-document.getElementById('shieldStrength').addEventListener('input',(e)=>{
-    document.getElementById('shieldStrengthVal').textContent=e.target.value;
-});
-
-function toggleCompare(){
-    compareMode=!compareMode;
-    updateCompareBtn();
-    render();
-}
-function updateCompareBtn(){
-    const btn=document.getElementById('compareToggle');
-    if(compareMode){ btn.classList.add('active'); btn.textContent='👁 ดูผลลัพธ์'; }
-    else { btn.classList.remove('active'); btn.textContent='👁 ดูต้นฉบับ'; }
 }
 
 // ==================== MOUSE / TOUCH ====================
@@ -507,28 +414,25 @@ window.addEventListener('mousemove',(e)=>{ if(!isDragging||!img)return; const dx
 window.addEventListener('mouseup',()=>{ isDragging=false; });
 canvas.addEventListener('wheel',(e)=>{ e.preventDefault(); if(!img)return; const delta=e.deltaY>0?0.9:1.1; zoom=Math.max(0.1,Math.min(10,zoom*delta)); document.getElementById('zoomSlider').value=zoom; document.getElementById('zoomVal').textContent=zoom.toFixed(1); clampOffset(); render(); },{passive:false});
 
-let lastTouchDist=0, touchZoomStart=1;
-canvas.addEventListener('touchstart',(e)=>{
-    if(e.touches.length===1){ isDragging=true; dragStartX=e.touches[0].clientX; dragStartY=e.touches[0].clientY; dragOffX=offsetX; dragOffY=offsetY; }
-    else if(e.touches.length===2){ isDragging=false; lastTouchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); touchZoomStart=zoom; }
-},{passive:false});
-canvas.addEventListener('touchmove',(e)=>{
-    e.preventDefault(); if(!img)return;
-    if(e.touches.length===1&&isDragging){ const t=e.touches[0]; const dx=(t.clientX-dragStartX)/zoom; const dy=(t.clientY-dragStartY)/zoom; offsetX=dragOffX-dx; offsetY=dragOffY-dy; clampOffset(); render(); }
-    else if(e.touches.length===2){ const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); zoom=Math.max(0.1,Math.min(10,touchZoomStart*(dist/lastTouchDist))); document.getElementById('zoomSlider').value=zoom; document.getElementById('zoomVal').textContent=zoom.toFixed(1); clampOffset(); render(); }
-},{passive:false});
-canvas.addEventListener('touchend',()=>{ isDragging=false; });
-function clampOffset(){ if(!img)return; const srcW=frameW/zoom, srcH=frameH/zoom; offsetX=Math.max(0,Math.min(Math.max(0,img.width-srcW),offsetX)); offsetY=Math.max(0,Math.min(Math.max(0,img.height-srcH),offsetY)); }
+let lastTouchDist=0,touchZoomStart=1;
+canvas.addEventListener('touchstart',(e)=>{ if(e.touches.length===1){isDragging=true;dragStartX=e.touches[0].clientX;dragStartY=e.touches[0].clientY;dragOffX=offsetX;dragOffY=offsetY;}else if(e.touches.length===2){isDragging=false;lastTouchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);touchZoomStart=zoom;}},{passive:false});
+canvas.addEventListener('touchmove',(e)=>{e.preventDefault();if(!img)return;if(e.touches.length===1&&isDragging){const t=e.touches[0];const dx=(t.clientX-dragStartX)/zoom;const dy=(t.clientY-dragStartY)/zoom;offsetX=dragOffX-dx;offsetY=dragOffY-dy;clampOffset();render();}else if(e.touches.length===2){const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);zoom=Math.max(0.1,Math.min(10,touchZoomStart*(dist/lastTouchDist)));document.getElementById('zoomSlider').value=zoom;document.getElementById('zoomVal').textContent=zoom.toFixed(1);clampOffset();render();}},{passive:false});
+canvas.addEventListener('touchend',()=>{isDragging=false;});
+function clampOffset(){if(!img)return;const srcW=frameW/zoom,srcH=frameH/zoom;offsetX=Math.max(0,Math.min(Math.max(0,img.width-srcW),offsetX));offsetY=Math.max(0,Math.min(Math.max(0,img.height-srcH),offsetY));}
+
 
 // ==================== RENDER CORE ====================
 function render(){
-    const modeText=shieldMode?'SHIELD':currentMode.toUpperCase();
-    infoBar.textContent=`${frameW}×${frameH} | ${zoom.toFixed(1)}x | ${modeText}`;
-    const cw=canvas.width, ch=canvas.height;
-    ctx.fillStyle='#000000'; ctx.fillRect(0,0,cw,ch);
+    infoBar.textContent=`${frameW}×${frameH} | ${zoom.toFixed(1)}x | ${currentSubMode.toUpperCase()}`;
+    const size=frameW*pixelScale;
+    if(canvas.width!==size||canvas.height!==size){ resizeCanvas(); }
+
+    ctx.fillStyle='#000000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    origCtx.fillStyle='#000000'; origCtx.fillRect(0,0,origCanvas.width,origCanvas.height);
+
     if(!img){ drawPlaceholder(); return; }
 
-    // Sample to source
+    // Sample source
     const srcW=frameW/zoom, srcH=frameH/zoom;
     let sx=offsetX, sy=offsetY, sw=srcW, sh=srcH;
     if(img.width<sw){ sx=0; sw=img.width; }
@@ -537,13 +441,41 @@ function render(){
     sourceCtx.drawImage(img,sx,sy,sw,sh,0,0,frameW,frameH);
     try{ sourceData=sourceCtx.getImageData(0,0,frameW,frameH); }catch(e){ return; }
 
-    let processed;
-    if(shieldMode&&shieldData){
-        if(compareMode) processed=sourceData; else processed=shieldData;
-    } else {
-        processed = processMode(sourceData, currentMode);
-    }
+    // Draw original preview
+    drawOriginalPreview();
+
+    // Process
+    const processed = processMode(sourceData, currentSubMode);
     drawToCanvas(processed);
+}
+
+function drawOriginalPreview(){
+    const s=sourceData.data;
+    const cw=origCanvas.width, ch=origCanvas.height;
+    const outData=origCtx.createImageData(cw,ch);
+    const out=outData.data;
+    const ps=pixelScale, spw=Math.floor(ps/3);
+    for(let i=0;i<out.length;i+=4){ out[i]=0; out[i+1]=0; out[i+2]=0; out[i+3]=255; }
+    for(let fy=0;fy<frameH;fy++){
+        for(let fx=0;fx<frameW;fx++){
+            const idx=(fy*frameW+fx)*4;
+            const r=Math.min(255,Math.round(s[idx]*brightness));
+            const g=Math.min(255,Math.round(s[idx+1]*brightness));
+            const b=Math.min(255,Math.round(s[idx+2]*brightness));
+            const bx=fx*ps, by=fy*ps;
+            for(let py=0;py<ps;py++){
+                for(let px=0;px<ps;px++){
+                    const cx=bx+px, cy=by+py;
+                    if(cx>=cw||cy>=ch)continue;
+                    const o=(cy*cw+cx)*4;
+                    if(px<spw){ out[o]=r; out[o+1]=0; out[o+2]=0; out[o+3]=255; }
+                    else if(px<spw*2){ out[o]=0; out[o+1]=g; out[o+2]=0; out[o+3]=255; }
+                    else { out[o]=0; out[o+1]=0; out[o+2]=b; out[o+3]=255; }
+                }
+            }
+        }
+    }
+    origCtx.putImageData(outData,0,0);
 }
 
 function drawPlaceholder(){
@@ -551,6 +483,7 @@ function drawPlaceholder(){
     const outData=ctx.createImageData(cw,ch);
     const out=outData.data;
     const ps=pixelScale, spw=Math.floor(ps/3);
+    for(let i=0;i<out.length;i+=4){ out[i]=0; out[i+1]=0; out[i+2]=0; out[i+3]=255; }
     for(let fy=0;fy<frameH;fy++){
         for(let fx=0;fx<frameW;fx++){
             const bx=fx*ps, by=fy*ps;
@@ -559,14 +492,16 @@ function drawPlaceholder(){
                     const cx=bx+px, cy=by+py;
                     if(cx>=cw||cy>=ch)continue;
                     const o=(cy*cw+cx)*4;
-                    if(px<spw){ out[o]=40; out[o+1]=0; out[o+2]=0; out[o+3]=255; }
-                    else if(px<spw*2){ out[o]=0; out[o+1]=40; out[o+2]=0; out[o+3]=255; }
-                    else { out[o]=0; out[o+1]=0; out[o+2]=40; out[o+3]=255; }
+                    if(px<spw){ out[o]=30; out[o+1]=0; out[o+2]=0; out[o+3]=255; }
+                    else if(px<spw*2){ out[o]=0; out[o+1]=30; out[o+2]=0; out[o+3]=255; }
+                    else { out[o]=0; out[o+1]=0; out[o+2]=30; out[o+3]=255; }
                 }
             }
         }
     }
     ctx.putImageData(outData,0,0);
+    // Same for original
+    origCtx.putImageData(outData,0,0);
 }
 
 function drawToCanvas(data){
@@ -605,6 +540,7 @@ function processMode(src, mode){
     const out=ctx.createImageData(w,h);
     const s=src.data, d=out.data;
     for(let i=0;i<s.length;i++) d[i]=s[i];
+
     switch(mode){
         case 'phase': processPhase(s,d,w,h); break;
         case 'shuffle': processShuffle(s,d,w,h); break;
@@ -613,10 +549,20 @@ function processMode(src, mode){
         case 'deepmask': processDeepMask(s,d,w,h); break;
         case 'scatter': processScatter(s,d,w,h); break;
         case 'noisegrid': processNoiseGrid(s,d,w,h); break;
+        // Stealth modes
+        case 'fourier': processFourier(s,d,w,h); break;
+        case 'semantic': processSemantic(s,d,w,h); break;
+        case 'gradientfog': processGradientFog(s,d,w,h); break;
+        case 'colorwarp': processColorWarp(s,d,w,h); break;
+        case 'multijitter': processMultiJitter(s,d,w,h); break;
+        case 'edgedissolve': processEdgeDissolve(s,d,w,h); break;
+        case 'phashpoison': processPHashPoison(s,d,w,h); break;
+        case 'chaosmix': processChaosMix(s,d,w,h); break;
     }
     return out;
 }
 
+// ---- NORMAL MODES ----
 function processPhase(s,d,w,h){
     const seed=12345, strength=0.7;
     const temp=new Uint8ClampedArray(s.length);
@@ -642,26 +588,12 @@ function processShuffle(s,d,w,h){
         for(let bx=0;bx<w;bx+=block){
             const bh=Math.min(block,h-by), bw=Math.min(block,w-bx);
             const pixels=[];
-            for(let y=0;y<bh;y++){
-                for(let x=0;x<bw;x++){
-                    const i=((by+y)*w+(bx+x))*4;
-                    pixels.push([s[i],s[i+1],s[i+2]]);
-                }
-            }
+            for(let y=0;y<bh;y++) for(let x=0;x<bw;x++){ const i=((by+y)*w+(bx+x))*4; pixels.push([s[i],s[i+1],s[i+2]]); }
             let seed=bx*374761+by*668265+12345;
             const rng=()=>{ seed=(seed*16807)%2147483647; return (seed-1)/2147483646; };
-            for(let i=pixels.length-1;i>0;i--){
-                const j=Math.floor(rng()*(i+1));
-                [pixels[i],pixels[j]]=[pixels[j],pixels[i]];
-            }
+            for(let i=pixels.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [pixels[i],pixels[j]]=[pixels[j],pixels[i]]; }
             let pi=0;
-            for(let y=0;y<bh;y++){
-                for(let x=0;x<bw;x++){
-                    const i=((by+y)*w+(bx+x))*4;
-                    d[i]=pixels[pi][0]; d[i+1]=pixels[pi][1]; d[i+2]=pixels[pi][2]; d[i+3]=255;
-                    pi++;
-                }
-            }
+            for(let y=0;y<bh;y++) for(let x=0;x<bw;x++){ const i=((by+y)*w+(bx+x))*4; d[i]=pixels[pi][0]; d[i+1]=pixels[pi][1]; d[i+2]=pixels[pi][2]; d[i+3]=255; pi++; }
         }
     }
 }
@@ -670,32 +602,24 @@ function processAdversarial(s,d,w,h){
     for(let y=1;y<h-1;y++){
         for(let x=1;x<w-1;x++){
             const i=(y*w+x)*4;
-            const up=(y*w+x)*4, down=((y+1)*w+x)*4, left=(y*w+(x-1))*4, right=(y*w+(x+1))*4;
+            const up=((y-1)*w+x)*4, down=((y+1)*w+x)*4, left=(y*w+(x-1))*4, right=(y*w+(x+1))*4;
             const gy=Math.abs(s[up]-s[down])+Math.abs(s[up+1]-s[down+1])+Math.abs(s[up+2]-s[down+2]);
             const gx=Math.abs(s[left]-s[right])+Math.abs(s[left+1]-s[right+1])+Math.abs(s[left+2]-s[right+2]);
             const grad=Math.min(1,(gx+gy)/300);
             const n=(Math.random()-0.5)*noiseAmp*grad;
-            d[i]=Math.max(0,Math.min(255,s[i]+n));
-            d[i+1]=Math.max(0,Math.min(255,s[i+1]+n));
-            d[i+2]=Math.max(0,Math.min(255,s[i+2]+n));
-            d[i+3]=255;
+            d[i]=Math.max(0,Math.min(255,s[i]+n)); d[i+1]=Math.max(0,Math.min(255,s[i+1]+n)); d[i+2]=Math.max(0,Math.min(255,s[i+2]+n)); d[i+3]=255;
         }
     }
-    for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ if(x===0||x===w-1||y===0||y===h-1){ const i=(y*w+x)*4; d[i]=s[i]; d[i+1]=s[i+1]; d[i+2]=s[i+2]; d[i+3]=255; } } }
 }
 function processEdgeBreak(s,d,w,h){
     const threshold=30;
     for(let y=1;y<h-1;y++){
         for(let x=1;x<w-1;x++){
-            const i=(y*w+x)*4;
-            const left=(y*w+(x-1))*4, right=(y*w+(x+1))*4, up=((y-1)*w+x)*4, down=((y+1)*w+x)*4;
+            const i=(y*w+x)*4, left=(y*w+(x-1))*4, right=(y*w+(x+1))*4, up=((y-1)*w+x)*4, down=((y+1)*w+x)*4;
             const diffH=Math.abs(s[i]-s[left])+Math.abs(s[i+1]-s[left+1])+Math.abs(s[i+2]-s[left+2]);
             const diffV=Math.abs(s[i]-s[up])+Math.abs(s[i+1]-s[up+1])+Math.abs(s[i+2]-s[up+2]);
-            if(diffH>threshold||diffV>threshold){
-                d[i]=255-s[i]; d[i+1]=255-s[i+1]; d[i+2]=255-s[i+2]; d[i+3]=255;
-            } else {
-                d[i]=s[i]; d[i+1]=s[i+1]; d[i+2]=s[i+2]; d[i+3]=255;
-            }
+            if(diffH>threshold||diffV>threshold){ d[i]=255-s[i]; d[i+1]=255-s[i+1]; d[i+2]=255-s[i+2]; d[i+3]=255; }
+            else { d[i]=s[i]; d[i+1]=s[i+1]; d[i+2]=s[i+2]; d[i+3]=255; }
         }
     }
 }
@@ -705,15 +629,8 @@ function processDeepMask(s,d,w,h){
         for(let x=0;x<w;x++){
             const i=(y*w+x)*4;
             const cx=Math.floor(x/check), cy=Math.floor(y/check);
-            if(((cx+cy)%2===0)){
-                d[i]=s[i]; d[i+1]=s[i+1]; d[i+2]=s[i+2]; d[i+3]=255;
-            } else {
-                const noise=((x*73+y*37)%40)-20;
-                d[i]=Math.max(0,Math.min(255,s[i]+noise));
-                d[i+1]=Math.max(0,Math.min(255,s[i+1]+noise));
-                d[i+2]=Math.max(0,Math.min(255,s[i+2]+noise));
-                d[i+3]=255;
-            }
+            if(((cx+cy)%2===0)){ d[i]=s[i]; d[i+1]=s[i+1]; d[i+2]=s[i+2]; d[i+3]=255; }
+            else { const noise=((x*73+y*37)%40)-20; d[i]=Math.max(0,Math.min(255,s[i]+noise)); d[i+1]=Math.max(0,Math.min(255,s[i+1]+noise)); d[i+2]=Math.max(0,Math.min(255,s[i+2]+noise)); d[i+3]=255; }
         }
     }
 }
@@ -740,9 +657,38 @@ function processNoiseGrid(s,d,w,h){
                 for(let x=0;x<cw;x++){
                     const i=((cy+y)*w+(cx+x))*4;
                     const n=(Math.random()-0.5)*level;
-                    d[i]=Math.max(0,Math.min(255,s[i]+n));
-                    d[i+1]=Math.max(0,Math.min(255,s[i+1]+n));
-                    d[i+2]=Math.max(0,Math.min(255,s[i+2]+n));
+                    d[i]=Math.max(0,Math.min(255,s[i]+n)); d[i+1]=Math.max(0,Math.min(255,s[i+1]+n)); d[i+2]=Math.max(0,Math.min(255,s[i+2]+n)); d[i+3]=255;
+                }
+            }
+        }
+    }
+}
+
+// ---- STEALTH MODES (Advanced) ----
+function processFourier(s,d,w,h){
+    // Simulated frequency domain masking: block-wise DCT-like coefficient manipulation
+    const block=8;
+    for(let by=0;by<h;by+=block){
+        for(let bx=0;bx<w;bx+=block){
+            const bh=Math.min(block,h-by), bw=Math.min(block,w-bx);
+            // Compute average color of block
+            let sumR=0,sumG=0,sumB=0,cnt=0;
+            for(let y=0;y<bh;y++){
+                for(let x=0;x<bw;x++){
+                    const i=((by+y)*w+(bx+x))*4;
+                    sumR+=s[i]; sumG+=s[i+1]; sumB+=s[i+2]; cnt++;
+                }
+            }
+            const avgR=sumR/cnt, avgG=sumG/cnt, avgB=sumB/cnt;
+            // Add high-freq noise proportional to distance from average (simulating AC coefficient noise)
+            for(let y=0;y<bh;y++){
+                for(let x=0;x<bw;x++){
+                    const i=((by+y)*w+(bx+x))*4;
+                    const dist=Math.abs(s[i]-avgR)+Math.abs(s[i+1]-avgG)+Math.abs(s[i+2]-avgB);
+                    const noise=(Math.random()-0.5)*dist*0.8;
+                    d[i]=Math.max(0,Math.min(255,s[i]+noise));
+                    d[i+1]=Math.max(0,Math.min(255,s[i+1]+noise));
+                    d[i+2]=Math.max(0,Math.min(255,s[i+2]+noise));
                     d[i+3]=255;
                 }
             }
@@ -750,279 +696,196 @@ function processNoiseGrid(s,d,w,h){
     }
 }
 
-// ==================== AI SHIELD PROCESSORS ====================
-function applyShield(){
-    if(!sourceData){ showToast('กรุณาอัปโหลดภาพก่อน'); return; }
-    showLoading(true);
-    setTimeout(()=>{
-        const tech=document.getElementById('shieldTechnique').value;
-        const strength=parseInt(document.getElementById('shieldStrength').value);
-        const block=parseInt(document.getElementById('shieldBlock').value);
-        const seed=parseInt(document.getElementById('shieldSeed').value);
-        const w=sourceData.width, h=sourceData.height;
-        const out=ctx.createImageData(w,h);
-        const s=sourceData.data, d=out.data;
-        for(let i=0;i<s.length;i++) d[i]=s[i];
-
-        switch(tech){
-            case 'gradient': shieldGradient(s,d,w,h,strength); break;
-            case 'dct': shieldDCT(s,d,w,h,strength,block); break;
-            case 'patch': shieldPatch(s,d,w,h,strength,block,seed); break;
-            case 'chromatic': shieldChromatic(s,d,w,h,strength); break;
-            case 'freq': shieldFreq(s,d,w,h,strength); break;
-            case 'hash': shieldHash(s,d,w,h,strength,seed); break;
-            case 'mosaic': shieldMosaic(s,d,w,h,strength,block); break;
-            case 'glitch': shieldGlitch(s,d,w,h,strength,seed); break;
-        }
-        shieldData=out;
-        compareMode=false; updateCompareBtn();
-        render();
-        showLoading(false);
-        showToast('ประมวลผล AI Shield สำเร็จ!');
-    },50);
-}
-
-function resetShield(){
-    shieldData=null;
-    compareMode=false; updateCompareBtn();
-    render();
-    showToast('รีเซ็ต AI Shield');
-}
-
-// 1. Gradient Masking: noise proportional to local gradient
-function shieldGradient(s,d,w,h,strength){
-    const amp=strength*0.8;
+function processSemantic(s,d,w,h){
+    // Semantic-aware: preserve low-freq (smooth areas), destroy high-freq (details)
+    const temp=new Uint8ClampedArray(s.length);
+    for(let i=0;i<s.length;i++) temp[i]=s[i];
+    // Simple blur for low-freq reference
     for(let y=1;y<h-1;y++){
         for(let x=1;x<w-1;x++){
             const i=(y*w+x)*4;
-            const u=((y-1)*w+x)*4, dn=((y+1)*w+x)*4, l=(y*w+(x-1))*4, r=(y*w+(x+1))*4;
-            const gy=Math.abs(s[u]-s[dn])+Math.abs(s[u+1]-s[dn+1])+Math.abs(s[u+2]-s[dn+2]);
-            const gx=Math.abs(s[l]-s[r])+Math.abs(s[l+1]-s[r+1])+Math.abs(s[l+2]-s[r+2]);
-            const grad=Math.min(1,(gx+gy)/400);
-            const n1=(Math.sin(x*0.7+y*0.3)*amp*grad);
-            const n2=(Math.cos(x*0.3+y*0.7)*amp*grad);
-            const n3=(Math.sin(x*0.5+y*0.5)*amp*grad);
-            d[i]=Math.max(0,Math.min(255,s[i]+n1));
-            d[i+1]=Math.max(0,Math.min(255,s[i+1]+n2));
-            d[i+2]=Math.max(0,Math.min(255,s[i+2]+n3));
-            d[i+3]=255;
-        }
-    }
-}
-
-// 2. DCT Perturbation: simulate JPEG artifact targeting
-function shieldDCT(s,d,w,h,strength,block){
-    const amp=strength*0.5;
-    for(let by=0;by<h;by+=block){
-        for(let bx=0;bx<w;bx+=block){
-            const bh=Math.min(block,h-by), bw=Math.min(block,w-bx);
-            // Simple DCT-like energy estimation and perturbation
-            let energy=0;
-            for(let y=0;y<bh;y++){
-                for(let x=0;x<bw;x++){
-                    const i=((by+y)*w+(bx+x))*4;
-                    energy+=(s[i]+s[i+1]+s[i+2])/3;
-                }
-            }
-            energy/=(bh*bw);
-            const perturb=(energy/255)*amp;
-            for(let y=0;y<bh;y++){
-                for(let x=0;x<bw;x++){
-                    const i=((by+y)*w+(bx+x))*4;
-                    const n=(Math.sin(bx*0.1+by*0.1+x*0.5+y*0.5)-0.5)*perturb*2;
-                    d[i]=Math.max(0,Math.min(255,s[i]+n));
-                    d[i+1]=Math.max(0,Math.min(255,s[i+1]+n));
-                    d[i+2]=Math.max(0,Math.min(255,s[i+2]+n));
-                    d[i+3]=255;
-                }
-            }
-        }
-    }
-}
-
-// 3. Patch Randomize: shuffle patches with seeded RNG
-function shieldPatch(s,d,w,h,strength,block,seed){
-    const swapProb=strength/100;
-    let rng=seed;
-    const next=()=>{ rng=(rng*16807)%2147483647; return (rng-1)/2147483646; };
-    for(let by=0;by<h;by+=block){
-        for(let bx=0;bx<w;bx+=block){
-            const bh=Math.min(block,h-by), bw=Math.min(block,w-bx);
-            if(next()>swapProb) continue;
-            // swap with random neighbor patch
-            const nbx=Math.min(w-bw,Math.max(0,bx+Math.floor((next()-0.5)*block*4)));
-            const nby=Math.min(h-bh,Math.max(0,by+Math.floor((next()-0.5)*block*4)));
-            for(let y=0;y<bh;y++){
-                for(let x=0;x<bw;x++){
-                    const si=((by+y)*w+(bx+x))*4;
-                    const di=((nby+y)*w+(nbx+x))*4;
-                    const blend=0.5+strength/200;
-                    d[si]=Math.round(s[si]*blend+s[di]*(1-blend));
-                    d[si+1]=Math.round(s[si+1]*blend+s[di+1]*(1-blend));
-                    d[si+2]=Math.round(s[si+2]*blend+s[di+2]*(1-blend));
-                    d[si+3]=255;
-                }
-            }
-        }
-    }
-}
-
-// 4. Chromatic Shift: separate RGB channels
-function shieldChromatic(s,d,w,h,strength){
-    const shift=Math.max(1,Math.floor(strength/15));
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            const i=(y*w+x)*4;
-            const rx=Math.max(0,Math.min(w-1,x-shift));
-            const gx=Math.max(0,Math.min(w-1,x));
-            const bx=Math.max(0,Math.min(w-1,x+shift));
-            const ri=(y*w+rx)*4, gi=(y*w+gx)*4, bi=(y*w+bx)*4;
-            d[i]=s[ri]; d[i+1]=s[gi+1]; d[i+2]=s[bi+2]; d[i+3]=255;
-        }
-    }
-}
-
-// 5. Frequency Split: separate low and high frequency
-function shieldFreq(s,d,w,h,strength){
-    const amp=strength*0.6;
-    // Blur copy (low freq)
-    const low=new Uint8ClampedArray(s.length);
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            const i=(y*w+x)*4;
-            let r=0,g=0,b=0,c=0;
+            let r=0,g=0,b=0;
             for(let dy=-1;dy<=1;dy++){
                 for(let dx=-1;dx<=1;dx++){
-                    const ny=Math.max(0,Math.min(h-1,y+dy));
-                    const nx=Math.max(0,Math.min(w-1,x+dx));
-                    const ni=(ny*w+nx)*4;
-                    r+=s[ni]; g+=s[ni+1]; b+=s[ni+2]; c++;
+                    const ii=((y+dy)*w+(x+dx))*4;
+                    r+=temp[ii]; g+=temp[ii+1]; b+=temp[ii+2];
                 }
             }
-            low[i]=r/c; low[i+1]=g/c; low[i+2]=b/c; low[i+3]=255;
-        }
-    }
-    // High freq = original - low, then perturb
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            const i=(y*w+x)*4;
-            const hfR=s[i]-low[i];
-            const hfG=s[i+1]-low[i+1];
-            const hfB=s[i+2]-low[i+2];
-            const noise=(Math.sin(x*0.9+y*0.4)*amp);
-            d[i]=Math.max(0,Math.min(255,low[i]+hfR+noise));
-            d[i+1]=Math.max(0,Math.min(255,low[i+1]+hfG+noise));
-            d[i+2]=Math.max(0,Math.min(255,low[i+2]+hfB+noise));
+            const blurR=r/9, blurG=g/9, blurB=b/9;
+            const detail=Math.abs(temp[i]-blurR)+Math.abs(temp[i+1]-blurG)+Math.abs(temp[i+2]-blurB);
+            const preserve=Math.max(0,1-detail/100); // preserve smooth areas
+            const noise=(Math.random()-0.5)*40*(1-preserve);
+            d[i]=Math.max(0,Math.min(255,blurR*preserve + temp[i]*(1-preserve) + noise));
+            d[i+1]=Math.max(0,Math.min(255,blurG*preserve + temp[i+1]*(1-preserve) + noise));
+            d[i+2]=Math.max(0,Math.min(255,blurB*preserve + temp[i+2]*(1-preserve) + noise));
             d[i+3]=255;
         }
     }
 }
 
-// 6. Hash Poison: minimal noise that changes pHash significantly
-function shieldHash(s,d,w,h,strength,seed){
-    const amp=strength*0.3;
-    let rng=seed;
-    const next=()=>{ rng=(rng*16807)%2147483647; return (rng-1)/2147483646; };
-    // Target specific frequency bands
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
+function processGradientFog(s,d,w,h){
+    // Make gradients noisy while preserving absolute values roughly
+    for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
             const i=(y*w+x)*4;
-            const phase=(x+y)*0.3+seed;
-            const n1=Math.sin(phase)*amp*(next());
-            const n2=Math.cos(phase)*amp*(next());
-            const n3=Math.sin(phase+1)*amp*(next());
-            d[i]=Math.max(0,Math.min(255,s[i]+n1));
-            d[i+1]=Math.max(0,Math.min(255,s[i+1]+n2));
-            d[i+2]=Math.max(0,Math.min(255,s[i+2]+n3));
+            const up=((y-1)*w+x)*4, left=(y*w+(x-1))*4;
+            const gradR=Math.abs(s[i]-s[up]), gradG=Math.abs(s[i+1]-s[up+1]), gradB=Math.abs(s[i+2]-s[up+2]);
+            const gradMag=(gradR+gradG+gradB)/3;
+            const fog=(Math.random()-0.5)*gradMag*2;
+            d[i]=Math.max(0,Math.min(255,s[i]+fog));
+            d[i+1]=Math.max(0,Math.min(255,s[i+1]+fog));
+            d[i+2]=Math.max(0,Math.min(255,s[i+2]+fog));
             d[i+3]=255;
         }
     }
 }
 
-// 7. Smart Mosaic: adaptive mosaic
-function shieldMosaic(s,d,w,h,strength,block){
-    const b=Math.max(2,Math.floor(block*(strength/100)));
-    for(let by=0;by<h;by+=b){
-        for(let bx=0;bx<w;bx+=b){
-            const bh=Math.min(b,h-by), bw=Math.min(b,w-bx);
-            let r=0,g=0,bv=0,c=0;
+function processColorWarp(s,d,w,h){
+    // HSV-like manipulation in RGB space
+    for(let i=0;i<s.length;i+=4){
+        const r=s[i]/255, g=s[i+1]/255, b=s[i+2]/255;
+        const max=Math.max(r,g,b), min=Math.min(r,g,b);
+        const l=(max+min)/2;
+        // Warp saturation and hue
+        const satWarp=0.6 + Math.sin(i*0.01)*0.4;
+        const hueShift=Math.sin(i*0.005)*0.2;
+        // Simple approximation: rotate RGB cube
+        let nr=r+hueShift, ng=g-hueShift*0.5, nb=b+hueShift*0.3;
+        // Desaturate then resaturate with warp
+        const gray=l;
+        nr=gray+(nr-gray)*satWarp;
+        ng=gray+(ng-gray)*satWarp;
+        nb=gray+(nb-gray)*satWarp;
+        d[i]=Math.max(0,Math.min(255,Math.round(nr*255)));
+        d[i+1]=Math.max(0,Math.min(255,Math.round(ng*255)));
+        d[i+2]=Math.max(0,Math.min(255,Math.round(nb*255)));
+        d[i+3]=255;
+    }
+}
+
+function processMultiJitter(s,d,w,h){
+    // Random scale per block
+    const block=12;
+    for(let by=0;by<h;by+=block){
+        for(let bx=0;bx<w;bx+=block){
+            const bh=Math.min(block,h-by), bw=Math.min(block,w-bx);
+            const scale=0.8+Math.random()*0.4; // 0.8-1.2
+            const srcCX=bx+bw/2, srcCY=by+bh/2;
             for(let y=0;y<bh;y++){
                 for(let x=0;x<bw;x++){
-                    const i=((by+y)*w+(bx+x))*4;
-                    r+=s[i]; g+=s[i+1]; bv+=s[i+2]; c++;
-                }
-            }
-            r/=c; g/=c; bv/=c;
-            // Add slight variation to avoid uniform blocks
-            const noise=(strength/100)*20;
-            r+=Math.sin(bx*0.5+by*0.3)*noise;
-            g+=Math.cos(bx*0.3+by*0.5)*noise;
-            bv+=Math.sin(bx*0.7+by*0.2)*noise;
-            for(let y=0;y<bh;y++){
-                for(let x=0;x<bw;x++){
-                    const i=((by+y)*w+(bx+x))*4;
-                    d[i]=Math.max(0,Math.min(255,r));
-                    d[i+1]=Math.max(0,Math.min(255,g));
-                    d[i+2]=Math.max(0,Math.min(255,bv));
-                    d[i+3]=255;
+                    const sx=Math.round(srcCX+(x-bw/2)*scale);
+                    const sy=Math.round(srcCY+(y-bh/2)*scale);
+                    const srcX=Math.max(0,Math.min(w-1,bx+sx));
+                    const srcY=Math.max(0,Math.min(h-1,by+sy));
+                    const si=(srcY*w+srcX)*4;
+                    const di=((by+y)*w+(bx+x))*4;
+                    d[di]=s[si]; d[di+1]=s[si+1]; d[di+2]=s[si+2]; d[di+3]=255;
                 }
             }
         }
     }
 }
 
-// 8. Glitch Burst: random byte-level corruption
-function shieldGlitch(s,d,w,h,strength,seed){
-    const burstCount=Math.floor(strength/2);
-    let rng=seed;
-    const next=()=>{ rng=(rng*16807)%2147483647; return (rng-1)/2147483646; };
-    for(let i=0;i<s.length;i++) d[i]=s[i];
-    for(let b=0;b<burstCount;b++){
-        const x=Math.floor(next()*w);
-        const y=Math.floor(next()*h);
-        const len=Math.floor(next()*20+5);
-        const dir=next()>0.5?1:0;
-        for(let k=0;k<len;k++){
-            const px=dir?Math.min(w-1,x+k):x;
-            const py=dir?y:Math.min(h-1,y+k);
-            const i=(py*w+px)*4;
-            if(next()>0.5) d[i]=Math.floor(next()*255);
-            if(next()>0.5) d[i+1]=Math.floor(next()*255);
-            if(next()>0.5) d[i+2]=Math.floor(next()*255);
+function processEdgeDissolve(s,d,w,h){
+    // Diffusion-like edge dissolve
+    const temp=new Uint8ClampedArray(s.length);
+    for(let i=0;i<s.length;i++) temp[i]=s[i];
+    for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
+            const i=(y*w+x)*4;
+            const up=((y-1)*w+x)*4, down=((y+1)*w+x)*4, left=(y*w+(x-1))*4, right=(y*w+(x+1))*4;
+            const edge=Math.abs(temp[i]-temp[left])+Math.abs(temp[i]-temp[right])+Math.abs(temp[i]-temp[up])+Math.abs(temp[i]-temp[down]);
+            const edgeNorm=Math.min(1,edge/400);
+            const neighbors=[temp[left],temp[right],temp[up],temp[down],temp[left+1],temp[right+1],temp[up+1],temp[down+1],temp[left+2],temp[right+2],temp[up+2],temp[down+2]];
+            const avgR=(neighbors[0]+neighbors[1]+neighbors[2]+neighbors[3])/4;
+            const avgG=(neighbors[4]+neighbors[5]+neighbors[6]+neighbors[7])/4;
+            const avgB=(neighbors[8]+neighbors[9]+neighbors[10]+neighbors[11])/4;
+            const blend=0.3+edgeNorm*0.5;
+            d[i]=Math.round(temp[i]*(1-blend)+avgR*blend);
+            d[i+1]=Math.round(temp[i+1]*(1-blend)+avgG*blend);
+            d[i+2]=Math.round(temp[i+2]*(1-blend)+avgB*blend);
+            d[i+3]=255;
         }
     }
 }
 
-// ==================== COPY / DOWNLOAD SHIELD ====================
-function copyShieldImage(){
-    if(!shieldData){ showToast('กรุณาประมวลผล AI Shield ก่อน'); return; }
-    try{
-        canvas.toBlob(async(blob)=>{
-            if(!blob)return;
-            try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); showToast('คัดลอกภาพ Shield แล้ว!'); }
-            catch(err){
-                const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`ai-shield-${frameW}x${frameH}.png`; a.click(); URL.revokeObjectURL(url);
-                showToast('ดาวน์โหลดภาพ Shield แล้ว');
+function processPHashPoison(s,d,w,h){
+    // Perceptual hash poisoning: alter low-frequency components to change hash while keeping perceptual similarity
+    // Strategy: apply subtle sine wave modulation across entire image
+    const freqX=0.15, freqY=0.15, amp=20;
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+            const mod=Math.sin(x*freqX)*Math.sin(y*freqY)*amp;
+            d[i]=Math.max(0,Math.min(255,s[i]+mod));
+            d[i+1]=Math.max(0,Math.min(255,s[i+1]+mod*0.8));
+            d[i+2]=Math.max(0,Math.min(255,s[i+2]+mod*1.2));
+            d[i+3]=255;
+        }
+    }
+    // Also add block-wise phase shift
+    const block=16;
+    for(let by=0;by<h;by+=block){
+        for(let bx=0;bx<w;bx+=block){
+            const phase=(Math.sin(bx*0.5)+Math.cos(by*0.5))*10;
+            for(let y=0;y<block;y++){
+                for(let x=0;x<block;x++){
+                    if(by+y>=h||bx+x>=w)continue;
+                    const i=((by+y)*w+(bx+x))*4;
+                    d[i]=Math.max(0,Math.min(255,d[i]+phase));
+                    d[i+1]=Math.max(0,Math.min(255,d[i+1]+phase*0.9));
+                    d[i+2]=Math.max(0,Math.min(255,d[i+2]+phase*1.1));
+                }
             }
-        });
-    }catch(e){ showToast('ไม่สามารถคัดลอกได้'); }
+        }
+    }
 }
 
-function downloadShield(){
-    if(!shieldData){ showToast('กรุณาประมวลผล AI Shield ก่อน'); return; }
-    const url=canvas.toDataURL('image/png');
-    const a=document.createElement('a'); a.href=url; a.download=`ai-shield-${Date.now()}.png`; a.click();
-    showToast('ดาวน์โหลดสำเร็จ!');
+function processChaosMix(s,d,w,h){
+    // Ultimate mix: combine multiple techniques with random weights per pixel
+    const temp=new Uint8ClampedArray(s.length);
+    for(let i=0;i<s.length;i++) temp[i]=s[i];
+    // Pass 1: adversarial noise
+    for(let i=0;i<s.length;i+=4){
+        const n=(Math.random()-0.5)*25;
+        temp[i]=Math.max(0,Math.min(255,temp[i]+n));
+        temp[i+1]=Math.max(0,Math.min(255,temp[i+1]+n));
+        temp[i+2]=Math.max(0,Math.min(255,temp[i+2]+n));
+    }
+    // Pass 2: block shuffle with random size
+    const block=4+Math.floor(Math.random()*4);
+    for(let by=0;by<h;by+=block){
+        for(let bx=0;bx<w;bx+=block){
+            const bh=Math.min(block,h-by), bw=Math.min(block,w-bx);
+            const pixels=[];
+            for(let y=0;y<bh;y++) for(let x=0;x<bw;x++){ const i=((by+y)*w+(bx+x))*4; pixels.push([temp[i],temp[i+1],temp[i+2]]); }
+            let seed=bx*123+by*456+789;
+            const rng=()=>{ seed=(seed*1103515245+12345)%2147483648; return seed/2147483648; };
+            for(let i=pixels.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [pixels[i],pixels[j]]=[pixels[j],pixels[i]]; }
+            let pi=0;
+            for(let y=0;y<bh;y++) for(let x=0;x<bw;x++){ const i=((by+y)*w+(bx+x))*4; d[i]=pixels[pi][0]; d[i+1]=pixels[pi][1]; d[i+2]=pixels[pi][2]; d[i+3]=255; pi++; }
+        }
+    }
+    // Pass 3: color invert on edges
+    for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
+            const i=(y*w+x)*4, left=(y*w+(x-1))*4, up=((y-1)*w+x)*4;
+            const diff=Math.abs(d[i]-d[left])+Math.abs(d[i+1]-d[left+1])+Math.abs(d[i+2]-d[left+2]);
+            if(diff>50){
+                d[i]=Math.round(d[i]*0.7+255*0.3); d[i+1]=Math.round(d[i+1]*0.7); d[i+2]=Math.round(d[i+2]*0.7+255*0.3);
+            }
+        }
+    }
 }
 
-// ==================== ORIGINAL COPY ====================
+// ==================== COPY ====================
 document.getElementById('copyImageBtn').addEventListener('click',async()=>{
     try{
         canvas.toBlob(async(blob)=>{
             if(!blob)return;
             try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); showToast('คัดลอกภาพ PNG แล้ว!'); }
             catch(err){
-                const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`pixel-rgb-${frameW}x${frameH}.png`; a.click(); URL.revokeObjectURL(url);
+                const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`pixel-stealth-${frameW}x${frameH}.png`; a.click(); URL.revokeObjectURL(url);
                 showToast('ดาวน์โหลดภาพแล้ว');
             }
         });
@@ -1032,20 +895,20 @@ document.getElementById('copyImageBtn').addEventListener('click',async()=>{
 document.getElementById('copyTextBtn').addEventListener('click',()=>{ openModal(); generatePreview(); });
 function openModal(){ document.getElementById('copyModal').classList.add('active'); }
 function closeModal(){ document.getElementById('copyModal').classList.remove('active'); }
-function switchTab(tab){ currentTab=tab; document.querySelectorAll('.copy-tab').forEach(t=>t.classList.remove('active')); event.target.classList.add('active'); generatePreview(); }
+function switchTab(tab){ currentCopyTab=tab; document.querySelectorAll('.copy-tab').forEach(t=>t.classList.remove('active')); event.target.classList.add('active'); generatePreview(); }
 
 function generatePreview(){
     if(!sourceData){ document.getElementById('previewArea').textContent='กรุณาอัปโหลดภาพก่อน'; return; }
     const d=sourceData.data; const area=document.getElementById('previewArea'); area.innerHTML='';
-    if(currentTab==='ansi'){
+    if(currentCopyTab==='ansi'){
         let html='';
         for(let y=0;y<frameH;y++){ for(let x=0;x<frameW;x++){ const idx=(y*frameW+x)*4; html+=`<span style="color:rgb(${d[idx]},${d[idx+1]},${d[idx+2]})">&#9608;</span>`; } html+='<br>'; }
         area.innerHTML=html; area.dataset.raw=html; area.dataset.type='text/html';
-    }else if(currentTab==='html'){
+    }else if(currentCopyTab==='html'){
         let html=`<div style="display:inline-grid;grid-template-columns:repeat(${frameW},8px);grid-template-rows:repeat(${frameH},8px);gap:0;line-height:0;font-size:0;">`;
         for(let y=0;y<frameH;y++){ for(let x=0;x<frameW;x++){ const idx=(y*frameW+x)*4; html+=`<div style="width:8px;height:8px;display:grid;grid-template-columns:1fr 1fr 1fr;overflow:hidden"><div style="background:rgb(${d[idx]},0,0)"></div><div style="background:rgb(0,${d[idx+1]},0)"></div><div style="background:rgb(0,0,${d[idx+2]})"></div></div>`; } }
         html+='</div>'; area.innerHTML=html; area.dataset.raw=html; area.dataset.type='text/html';
-    }else if(currentTab==='subpixel'){
+    }else if(currentCopyTab==='subpixel'){
         let html='';
         for(let y=0;y<frameH;y++){ for(let x=0;x<frameW;x++){ const idx=(y*frameW+x)*4; html+=`<span style="color:rgb(${d[idx]},0,0)">&#9608;</span><span style="color:rgb(0,${d[idx+1]},0)">&#9608;</span><span style="color:rgb(0,0,${d[idx+2]})">&#9608;</span>`; } html+='<br>'; }
         area.innerHTML=html; area.dataset.raw=area.innerText; area.dataset.type='text/plain';
@@ -1062,7 +925,7 @@ function copyCurrentTab(){
 function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2500); }
 function showLoading(show){ document.getElementById('loadingOverlay').classList.toggle('active',show); }
 document.getElementById('copyModal').addEventListener('click',(e)=>{ if(e.target===e.currentTarget)closeModal(); });
-document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ closeModal(); document.getElementById('warningModal').classList.remove('active'); } });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape')closeModal(); });
 
 // ==================== START ====================
 init();
